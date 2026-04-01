@@ -5,7 +5,7 @@ compatibility_date = "2026-04-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "xiaohebao-dev"
-database_id = "replace-me"
+database_id = "196c22f1-4522-46aa-a713-c62ddce327a1"
 
 [vars]
 ENABLE_DEV_BYPASS = "true"

@@ -39,5 +39,5 @@ npm run deploy --workspace @xiaohebao/api-worker
 
 在 Expo 构建环境里设置：
 
-- `EXPO_PUBLIC_API_BASE_URL=<你的 Worker API URL>`
+- `EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:8787`
 

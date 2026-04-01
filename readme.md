@@ -1,4 +1,8 @@
 # MVP 技术栈清单
+
+> 完整项目文档（架构/包职责/依赖说明/测试/部署）：  
+> [PROJECT_GUIDE.md](/e:/code/meolord/Pouchie/PROJECT_GUIDE.md)
+
 ## 一、整体架构
 
 - **客户端**：React Native + Expo
