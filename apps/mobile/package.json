@@ -1,0 +1,39 @@
+{
+  "name": "@xiaohebao/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "dev": "expo start --ios",
+    "start": "expo start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.10.0",
+    "@tanstack/react-query": "^5.69.0",
+    "@xiaohebao/contracts": "0.1.0",
+    "@xiaohebao/ui-tokens": "0.1.0",
+    "expo": "~53.0.0",
+    "expo-apple-authentication": "~7.1.0",
+    "expo-blur": "~14.1.0",
+    "expo-haptics": "~14.1.0",
+    "expo-linear-gradient": "~14.1.0",
+    "expo-router": "~4.0.0",
+    "expo-secure-store": "~14.1.0",
+    "lucide-react-native": "^0.511.0",
+    "react": "18.3.1",
+    "react-hook-form": "^7.55.0",
+    "react-native": "0.76.9",
+    "react-native-safe-area-context": "4.12.0",
+    "react-native-screens": "~4.4.0",
+    "zod": "^3.24.2",
+    "zustand": "^5.0.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/react": "~18.3.12",
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.8"
+  }
+}

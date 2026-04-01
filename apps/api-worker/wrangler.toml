@@ -1,0 +1,15 @@
+name = "xiaohebao-api"
+main = "src/index.ts"
+compatibility_date = "2026-04-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "xiaohebao-dev"
+database_id = "replace-me"
+
+[vars]
+ENABLE_DEV_BYPASS = "true"
+SESSION_TTL_HOURS = "720"
+APPLE_AUDIENCE = "com.example.xiaohebao"
+APPLE_ISSUER = "https://appleid.apple.com"
+

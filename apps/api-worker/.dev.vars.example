@@ -1,0 +1,5 @@
+ENABLE_DEV_BYPASS=true
+SESSION_TTL_HOURS=720
+APPLE_AUDIENCE=com.meolord.xiaohebao
+APPLE_ISSUER=https://appleid.apple.com
+

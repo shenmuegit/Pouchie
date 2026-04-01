@@ -84,3 +84,73 @@
 - **PostgreSQL**：存储用户、业务数据，以及可选的长期 token/session 记录。
 
 ---
+
+## 六、本仓库当前实现（2026-04-01）
+
+本仓库已按“小荷包 MVP”落地为：
+
+- **客户端**：Expo + React Native（iOS 优先）
+- **后端**：Cloudflare Workers + Hono
+- **数据库**：Cloudflare D1（SQLite）
+- **业务抽象**：`Repository + Entry`，业务代码不依赖 Worker/D1
+- **共享契约**：`packages/contracts`（Zod + TS 类型）
+- **设计令牌**：`packages/ui-tokens`（Liquid Glass 视觉参数）
+
+目录结构：
+
+- `apps/mobile`：9 页面移动端（欢迎、登录、首页、账单、记账、统计、预算、分类、我的）
+- `apps/api-worker`：D1 仓储实现 + Hono API 路由
+- `packages/domain`：业务用例、仓储接口、Entry 抽象层
+- `packages/contracts`：前后端共享 DTO/Schema
+- `packages/ui-tokens`：玻璃材质视觉令牌
+
+---
+
+## 七、启动与测试
+
+### 1. 安装依赖
+
+```bash
+npm install
+```
+
+### 2. 本地启动 API（Worker）
+
+先在 `apps/api-worker/wrangler.toml` 填写 D1 `database_id`，然后：
+
+```bash
+npm run dev:api
+```
+
+### 3. 本地启动客户端（Expo iOS）
+
+```bash
+npm run dev:mobile
+```
+
+### 4. 运行测试与类型检查
+
+```bash
+npm run test
+npm run typecheck
+```
+
+---
+
+## 八、D1 迁移与种子
+
+```bash
+# 首次创建数据库后
+npx wrangler d1 migrations apply xiaohebao-dev --local
+npx wrangler d1 execute xiaohebao-dev --local --file=./apps/api-worker/migrations/0002_seed.sql
+```
+
+---
+
+## 九、迁移到 NestJS + Fastify + PostgreSQL 的路径
+
+当前业务层在 `packages/domain`，未来迁移只需：
+
+1. 新增 PostgreSQL 仓储实现（替换 `apps/api-worker/src/repositories` 的 D1 实现）。
+2. 新增 NestJS/Fastify 协议适配层（替换 Hono 路由层）。
+3. `Entry` 和业务 UseCase 可保持不变，移动端与 contracts 也可复用。

@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "小荷包",
+    "slug": "xiaohebao",
+    "scheme": "xiaohebao",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.meolord.xiaohebao"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
+
