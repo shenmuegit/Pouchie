@@ -21,4 +21,4 @@ android
 *.sqlite
 *.sqlite3
 *.db
-
+.tools
