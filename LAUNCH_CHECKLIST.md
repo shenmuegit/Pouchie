@@ -27,7 +27,7 @@
 - [x] 执行生产迁移（`--remote`）：`0001_init.sql` ✅ `0002_seed.sql` ✅
 - [x] 执行 Google 认证迁移：`wrangler d1 migrations apply xiaohebao-prod --env production --remote`（`0003_google_auth.sql`）✅
 - [x] 部署 Worker：**`https://xiaohebao-api-production.shenmuegm.workers.dev`**
-- [ ] 重新部署（含 Google 登录路由）：`wrangler deploy --env production`
+- [x] 重新部署（含 Google 登录路由）：`wrangler deploy --env production` ✅ (Version: 046cb1d1)
 - [x] `/health` 返回 `{"ok":true}` ✅
 - [x] 隐私政策页面 `https://xiaohebao-api-production.shenmuegm.workers.dev/privacy` ✅
 - [x] 支持页面 `https://xiaohebao-api-production.shenmuegm.workers.dev/support` ✅
