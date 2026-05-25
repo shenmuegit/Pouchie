@@ -22,3 +22,7 @@ android
 *.sqlite3
 *.db
 .tools
+
+# Google Play service account key (sensitive!)
+google-play-service-account.json
+apps/mobile/google-play-service-account.json

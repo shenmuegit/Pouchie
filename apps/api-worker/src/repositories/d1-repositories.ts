@@ -36,6 +36,7 @@ type D1Bool = 0 | 1;
 interface UserRow {
   id: string;
   apple_sub: string;
+  google_sub: string | null;
   email: string | null;
   display_name: string | null;
   created_at: string;
@@ -258,8 +259,16 @@ export class D1UserRepository implements UserRepository {
     return row ? mapUser(row) : null;
   }
 
+  async findByGoogleSub(googleSub: string): Promise<UserRecord | null> {
+    const row = await queryOne<UserRow>(this.db, "SELECT * FROM users WHERE google_sub = ?", [
+      googleSub
+    ]);
+    return row ? mapUser(row) : null;
+  }
+
   async create(input: {
     appleSub: string;
+    googleSub?: string;
     email: string | null;
     displayName: string | null;
   }): Promise<UserRecord> {
@@ -267,9 +276,9 @@ export class D1UserRepository implements UserRepository {
     const now = nowIso();
     await execute(
       this.db,
-      `INSERT INTO users (id, apple_sub, email, display_name, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [id, input.appleSub, input.email, input.displayName, now, now]
+      `INSERT INTO users (id, apple_sub, google_sub, email, display_name, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [id, input.appleSub, input.googleSub ?? null, input.email, input.displayName, now, now]
     );
     const row = await this.findById(id);
     if (!row) throw new Error("用户创建失败");

@@ -79,6 +79,11 @@ export const devLoginRequestSchema = z.object({
 });
 export type DevLoginRequest = z.infer<typeof devLoginRequestSchema>;
 
+export const googleLoginRequestSchema = z.object({
+  idToken: z.string().min(10)
+});
+export type GoogleLoginRequest = z.infer<typeof googleLoginRequestSchema>;
+
 export const dashboardSummarySchema = z.object({
   month: monthSchema,
   expenseCents: moneyCentsSchema.nonnegative(),

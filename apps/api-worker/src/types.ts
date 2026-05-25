@@ -4,6 +4,7 @@ export interface Env {
   SESSION_TTL_HOURS: string;
   APPLE_AUDIENCE: string;
   APPLE_ISSUER: string;
+  GOOGLE_CLIENT_ID: string;
 }
 
 export interface AuthContext {

@@ -22,6 +22,15 @@
         "NSFaceIDUsageDescription": "小荷包使用 Face ID 保护你的账户安全"
       }
     },
+    "android": {
+      "package": "com.meolord.xiaohebao",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#3B82F6"
+      },
+      "permissions": []
+    },
     "plugins": [
       "expo-router",
       "expo-apple-authentication"

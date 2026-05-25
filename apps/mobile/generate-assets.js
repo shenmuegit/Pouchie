@@ -170,15 +170,55 @@ function renderSplash(x, y, w, h) {
   return [r, g, b];
 }
 
+/* ── Adaptive Icon (Android, 1024×1024) ──────────────────────────────────── */
+// Same design as icon but wallet at 58% scale to stay well within the safe zone
+
+function renderAdaptiveIcon(x, y, w, h) {
+  const S  = w / 1024 * 0.58; // 58% scale keeps wallet inside ~66% safe zone
+  const cx = w / 2, cy = h / 2;
+  const AA = 1.5;
+
+  // Background: same blue gradient
+  const t = y / h;
+  let r = lerp(I_BG1[0], I_BG2[0], t);
+  let g = lerp(I_BG1[1], I_BG2[1], t);
+  let b = lerp(I_BG1[2], I_BG2[2], t);
+  const vx = (x - cx) / cx, vy = (y - cy) / cy;
+  const vig = 1 - 0.18 * (vx * vx + vy * vy);
+  r *= vig; g *= vig; b *= vig;
+
+  // Wallet body (scaled down)
+  const wCX = cx, wCY = cy + 30 * S, wHW = 270 * S, wHH = 185 * S, wR = 48 * S;
+  const wA = shapeA(sdfRR(x, y, wCX, wCY, wHW, wHH, wR), AA) * 0.96;
+  r = lerp(r, 255, wA); g = lerp(g, 255, wA); b = lerp(b, 255, wA);
+
+  const fCX = cx, fCY = wCY - wHH * 0.92, fHW = 195 * S, fHH = 82 * S, fR = 32 * S;
+  const fA = shapeA(sdfRR(x, y, fCX, fCY, fHW, fHH, fR), AA) * 0.96;
+  r = lerp(r, 255, fA); g = lerp(g, 255, fA); b = lerp(b, 255, fA);
+
+  const clA = shapeA(sdfRR(x, y, cx, wCY - wHH + 6 * S, 55 * S, 28 * S, 28 * S), AA);
+  r = lerp(r, I_CL[0], clA); g = lerp(g, I_CL[1], clA); b = lerp(b, I_CL[2], clA);
+
+  const l1A = shapeA(sdfRR(x, y, cx - 15 * S, wCY - 35 * S, 155 * S, 10 * S, 10 * S), AA) * 0.35;
+  r = lerp(r, I_LINE[0], l1A); g = lerp(g, I_LINE[1], l1A); b = lerp(b, I_LINE[2], l1A);
+  const l2A = shapeA(sdfRR(x, y, cx - 38 * S, wCY + 28 * S, 100 * S, 10 * S, 10 * S), AA) * 0.35;
+  r = lerp(r, I_LINE[0], l2A); g = lerp(g, I_LINE[1], l2A); b = lerp(b, I_LINE[2], l2A);
+
+  return [r, g, b];
+}
+
 /* ── Main ────────────────────────────────────────────────────────────────── */
 
 const assetsDir = path.join(__dirname, 'assets');
 fs.mkdirSync(assetsDir, { recursive: true });
 
 console.log('icon.png  (1024×1024)');
-savePng(path.join(assetsDir, 'icon.png'),   1024, 1024, renderIcon);
+savePng(path.join(assetsDir, 'icon.png'),           1024, 1024, renderIcon);
+
+console.log('adaptive-icon.png  (1024×1024)');
+savePng(path.join(assetsDir, 'adaptive-icon.png'),  1024, 1024, renderAdaptiveIcon);
 
 console.log('splash.png (1284×2778)');
-savePng(path.join(assetsDir, 'splash.png'), 1284, 2778, renderSplash);
+savePng(path.join(assetsDir, 'splash.png'),         1284, 2778, renderSplash);
 
 console.log('\nAssets saved to', assetsDir);

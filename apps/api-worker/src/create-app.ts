@@ -6,6 +6,7 @@ import {
   createCategoryRequestSchema,
   createTransactionRequestSchema,
   devLoginRequestSchema,
+  googleLoginRequestSchema,
   listTransactionsQuerySchema,
   patchProfilePreferencesRequestSchema,
   updateCategoryBudgetsRequestSchema,
@@ -58,7 +59,8 @@ function buildDefaultEntries(env: Env) {
       services: {
         authProvider: new WorkerAuthProvider({
           audience: env.APPLE_AUDIENCE,
-          issuer: env.APPLE_ISSUER
+          issuer: env.APPLE_ISSUER,
+          googleClientId: env.GOOGLE_CLIENT_ID ?? ""
         }),
         clock: systemClock
       },
@@ -191,6 +193,18 @@ export function createApiApp(options?: { buildEntries?: BuildEntriesFn }) {
       const parsed = appleLoginRequestSchema.parse(input);
       const { entries } = buildEntries(c.env);
       const payload = await entries.auth.appleLogin.execute(parsed);
+      return c.json(payload);
+    } catch (error) {
+      return toErrorResponse(c, error);
+    }
+  });
+
+  app.post("/v1/auth/google/login", async (c) => {
+    try {
+      const input = await c.req.json();
+      const parsed = googleLoginRequestSchema.parse(input);
+      const { entries } = buildEntries(c.env);
+      const payload = await entries.auth.googleLogin.execute(parsed);
       return c.json(payload);
     } catch (error) {
       return toErrorResponse(c, error);

@@ -12,6 +12,7 @@ import type {
   DashboardRecentTransactions,
   DashboardSummary,
   DevLoginRequest,
+  GoogleLoginRequest,
   ListTransactionsQuery,
   ListTransactionsResponse,
   MonthlyBudget,
@@ -95,6 +96,7 @@ export interface PatchProfileInput extends AuthenticatedInput {
 
 export interface AuthEntry {
   appleLogin: Entry<AppleLoginRequest, AuthResponse>;
+  googleLogin: Entry<GoogleLoginRequest, AuthResponse>;
   devLogin: Entry<DevLoginRequest, AuthResponse>;
   logout: Entry<LogoutInput, { success: true }>;
   me: Entry<AuthenticatedInput, User>;

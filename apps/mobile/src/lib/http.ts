@@ -81,6 +81,12 @@ export const apiClient = {
         body: payload
       });
     },
+    googleLogin(payload: { idToken: string }) {
+      return request<AuthResponse>("/v1/auth/google/login", {
+        method: "POST",
+        body: payload
+      });
+    },
     me(token: string) {
       return request<AuthResponse["user"]>("/v1/auth/me", { token });
     },

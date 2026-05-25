@@ -66,8 +66,10 @@ export interface PreferenceRecord extends ProfilePreferences {
 export interface UserRepository {
   findById(userId: string): Promise<UserRecord | null>;
   findByAppleSub(appleSub: string): Promise<UserRecord | null>;
+  findByGoogleSub(googleSub: string): Promise<UserRecord | null>;
   create(input: {
     appleSub: string;
+    googleSub?: string;
     email: string | null;
     displayName: string | null;
   }): Promise<UserRecord>;

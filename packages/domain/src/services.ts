@@ -4,6 +4,12 @@ export interface AppleIdentity {
   displayName: string | null;
 }
 
+export interface GoogleIdentity {
+  googleSub: string;
+  email: string | null;
+  displayName: string | null;
+}
+
 export interface TokenPair {
   rawToken: string;
   tokenHash: string;
@@ -11,6 +17,7 @@ export interface TokenPair {
 
 export interface AuthProvider {
   verifyAppleIdToken(idToken: string): Promise<AppleIdentity>;
+  verifyGoogleIdToken(idToken: string): Promise<GoogleIdentity>;
   issueOpaqueToken(): Promise<TokenPair>;
 }
 

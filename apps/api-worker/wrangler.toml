@@ -13,6 +13,7 @@ ENABLE_DEV_BYPASS = "true"
 SESSION_TTL_HOURS = "720"
 APPLE_AUDIENCE = "com.meolord.xiaohebao"
 APPLE_ISSUER = "https://appleid.apple.com"
+GOOGLE_CLIENT_ID = ""  # TODO: 填入 Google Cloud Console 的 Web OAuth Client ID
 
 # ── 生产环境（wrangler deploy --env production） ──────────
 [env.production]
@@ -28,4 +29,5 @@ ENABLE_DEV_BYPASS = "false"
 SESSION_TTL_HOURS = "720"
 APPLE_AUDIENCE = "com.meolord.xiaohebao"
 APPLE_ISSUER = "https://appleid.apple.com"
+GOOGLE_CLIENT_ID = ""  # TODO: 填入 Google Cloud Console 的 Web OAuth Client ID
 

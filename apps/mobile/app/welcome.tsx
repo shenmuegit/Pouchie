@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { Wallet } from "lucide-react-native";
 import { Page } from "../src/components/Page";
 import { GlassCard } from "../src/components/GlassCard";
@@ -18,7 +18,10 @@ export default function WelcomePage() {
           <Text style={styles.slogan}>优雅记录，轻盈理财</Text>
         </View>
         <View style={styles.actions}>
-          <GlassButton label="使用 Apple 登录" onPress={() => router.push("/signin")} />
+          <GlassButton
+            label={Platform.OS === "android" ? "使用 Google 登录" : "使用 Apple 登录"}
+            onPress={() => router.push("/signin")}
+          />
           <Text style={styles.note}>所有数据通过端到端加密保护</Text>
         </View>
       </View>

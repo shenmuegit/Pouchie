@@ -203,6 +203,31 @@ export function createAppEntries(ctx: DomainContext): AppEntries {
           return buildAuthResponse(ctx, toPublicUser(user), now);
         }
       },
+      googleLogin: {
+        execute: async (input) => {
+          const identity = await ctx.services.authProvider.verifyGoogleIdToken(input.idToken);
+          const now = ctx.services.clock.now();
+
+          let user = await ctx.repos.users.findByGoogleSub(identity.googleSub);
+          if (!user) {
+            user = await ctx.repos.users.create({
+              appleSub: `google-${identity.googleSub}`,
+              googleSub: identity.googleSub,
+              email: identity.email,
+              displayName: identity.displayName
+            });
+            await ctx.repos.categories.ensureDefaultCategories(user.id);
+          } else {
+            user = await ctx.repos.users.updateProfile(user.id, {
+              email: identity.email ?? user.email,
+              displayName: identity.displayName ?? user.displayName
+            });
+          }
+
+          await ctx.repos.preferences.getOrCreate(user.id);
+          return buildAuthResponse(ctx, toPublicUser(user), now);
+        }
+      },
       devLogin: {
         execute: async (input) => {
           if (!ctx.config.enableDevBypass) {
