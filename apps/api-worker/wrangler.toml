@@ -21,7 +21,7 @@ name = "xiaohebao-api-production"
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "xiaohebao-prod"
-database_id = ""  # TODO: 在 Cloudflare Dashboard 创建 D1 后填写
+database_id = "a62e57d0-c627-4435-a55a-2e9a6289fbd1"
 
 [env.production.vars]
 ENABLE_DEV_BYPASS = "false"

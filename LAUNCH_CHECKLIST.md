@@ -21,18 +21,13 @@
 
 ## 二、后端部署（Cloudflare Workers）
 
-- [ ] 在 Cloudflare Dashboard 创建生产 D1 数据库，命名 `xiaohebao-prod`
-- [ ] 将数据库 ID 填入 `wrangler.toml` 的 `[env.production]` 段
-- [ ] 执行生产迁移：
-  ```bash
-  npx wrangler d1 migrations apply xiaohebao-prod --env production
-  ```
-- [ ] 部署 Worker：
-  ```bash
-  npx wrangler deploy --env production
-  ```
-- [ ] 记录生产 Worker URL（形如 `https://xiaohebao-api-production.<account>.workers.dev`）
-- [ ] 用 `curl https://<worker-url>/health` 验证返回 `{"ok":true}`
+- [x] 在 Cloudflare Dashboard 创建生产 D1 数据库 `xiaohebao-prod`（ID: `a62e57d0-c627-4435-a55a-2e9a6289fbd1`）
+- [x] 数据库 ID 已填入 `wrangler.toml` 的 `[env.production]` 段
+- [x] 执行生产迁移（`--remote`）：`0001_init.sql` ✅ `0002_seed.sql` ✅
+- [x] 部署 Worker：**`https://xiaohebao-api-production.shenmuegm.workers.dev`**
+- [x] `/health` 返回 `{"ok":true}` ✅
+- [x] 隐私政策页面 `https://xiaohebao-api-production.shenmuegm.workers.dev/privacy` ✅
+- [x] 支持页面 `https://xiaohebao-api-production.shenmuegm.workers.dev/support` ✅
 
 ---
 
@@ -125,12 +120,12 @@ eas submit --platform ios --profile production
 
 **隐私政策 URL**（必须）
 ```
-TODO: https://your-domain.com/privacy
+https://xiaohebao-api-production.shenmuegm.workers.dev/privacy
 ```
 
 **支持网址**（必须）
 ```
-TODO: https://your-domain.com/support
+https://xiaohebao-api-production.shenmuegm.workers.dev/support
 ```
 
 ---

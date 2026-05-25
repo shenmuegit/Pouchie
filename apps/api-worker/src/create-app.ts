@@ -91,6 +91,100 @@ export function createApiApp(options?: { buildEntries?: BuildEntriesFn }) {
     })
   );
 
+  app.get("/privacy", (c) =>
+    c.html(`<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小荷包 · 隐私政策</title>
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',Helvetica,sans-serif;
+         max-width:720px;margin:0 auto;padding:28px 20px;color:#1e293b;line-height:1.75}
+    h1{font-size:24px;color:#1d4ed8;margin-bottom:4px}
+    .date{color:#64748b;font-size:14px;margin-bottom:32px}
+    h2{font-size:17px;margin-top:36px;color:#1e293b}
+    p,li{margin:10px 0;font-size:15px}
+    a{color:#2563eb}
+    footer{margin-top:56px;font-size:13px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:16px}
+  </style>
+</head>
+<body>
+<h1>小荷包 · 隐私政策</h1>
+<p class="date">最后更新：2026 年 5 月 25 日</p>
+
+<p>小荷包（以下简称"本应用"）由 meolord 开发并运营。本政策说明本应用收集、使用及保护您个人信息的方式。</p>
+
+<h2>一、收集的信息</h2>
+<ul>
+  <li><strong>Apple 账号信息</strong>：通过 Sign in with Apple 登录时，您可选择是否共享姓名和邮箱地址，仅用于显示账户资料。</li>
+  <li><strong>财务记录</strong>：您手动录入的收支账单、分类与预算数据，存储于您的账户中，仅用于提供记账功能。</li>
+</ul>
+
+<h2>二、信息使用</h2>
+<p>我们收集的信息仅用于提供本应用的核心功能（记账、统计、预算管理）。我们不会将您的数据用于广告投放，也不会出售给任何第三方。</p>
+
+<h2>三、数据存储与安全</h2>
+<p>所有数据存储于 Cloudflare 提供的安全基础设施中，所有网络通信均通过 HTTPS 加密传输。本应用支持 Face ID 保护，防止他人未经授权访问您的账户。</p>
+
+<h2>四、第三方共享</h2>
+<p>我们不会主动向任何第三方共享您的个人信息，法律法规要求的情况除外。</p>
+
+<h2>五、数据删除</h2>
+<p>您可随时在应用内点击"退出登录"停止使用服务。如需永久删除账户及所有数据，请发送邮件至 <a href="mailto:shenmuemeolord@gmail.com">shenmuemeolord@gmail.com</a>，我们将在 7 个工作日内处理。</p>
+
+<h2>六、未成年人</h2>
+<p>本应用不面向 13 岁以下未成年人，我们不会有意收集其个人信息。</p>
+
+<h2>七、政策更新</h2>
+<p>本政策如有重大变更，我们将在应用内通知您，并更新本页面顶部的"最后更新"日期。</p>
+
+<h2>八、联系我们</h2>
+<p>如对本隐私政策有任何疑问或请求，请联系：<a href="mailto:shenmuemeolord@gmail.com">shenmuemeolord@gmail.com</a></p>
+
+<footer>© 2026 meolord · 小荷包</footer>
+</body>
+</html>`)
+  );
+
+  app.get("/support", (c) =>
+    c.html(`<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小荷包 · 支持</title>
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',Helvetica,sans-serif;
+         max-width:720px;margin:0 auto;padding:28px 20px;color:#1e293b;line-height:1.75}
+    h1{font-size:24px;color:#1d4ed8}
+    h2{font-size:17px;margin-top:32px}
+    p,li{font-size:15px;margin:10px 0}
+    a{color:#2563eb}
+    footer{margin-top:56px;font-size:13px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:16px}
+  </style>
+</head>
+<body>
+<h1>小荷包 · 技术支持</h1>
+
+<h2>联系方式</h2>
+<p>如遇到问题或有功能建议，请发送邮件至：<a href="mailto:shenmuemeolord@gmail.com">shenmuemeolord@gmail.com</a></p>
+<p>我们通常在 1–3 个工作日内回复。</p>
+
+<h2>常见问题</h2>
+<ul>
+  <li><strong>如何添加账单？</strong>点击底部导航栏中央的"＋"按钮即可快速记账。</li>
+  <li><strong>如何设置预算？</strong>在首页点击"预算管理"，可设置月总预算及每个分类的预算上限。</li>
+  <li><strong>如何删除账单？</strong>在"账单"页面左滑条目，选择删除。</li>
+  <li><strong>如何退出登录？</strong>进入"我的"页面，点击底部"退出登录"。</li>
+  <li><strong>如何删除账户？</strong>请发送邮件至上方地址，注明"删除账户"，我们将在 7 个工作日内处理。</li>
+</ul>
+
+<footer>© 2026 meolord · 小荷包</footer>
+</body>
+</html>`)
+  );
+
   app.post("/v1/auth/apple/login", async (c) => {
     try {
       const input = await c.req.json();
