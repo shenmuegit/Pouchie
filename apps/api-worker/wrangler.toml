@@ -2,6 +2,7 @@ name = "xiaohebao-api"
 main = "src/index.ts"
 compatibility_date = "2026-04-01"
 
+# ── 本地开发 ──────────────────────────────────────────────
 [[d1_databases]]
 binding = "DB"
 database_name = "xiaohebao-dev"
@@ -10,6 +11,21 @@ database_id = "196c22f1-4522-46aa-a713-c62ddce327a1"
 [vars]
 ENABLE_DEV_BYPASS = "true"
 SESSION_TTL_HOURS = "720"
-APPLE_AUDIENCE = "com.example.xiaohebao"
+APPLE_AUDIENCE = "com.meolord.xiaohebao"
+APPLE_ISSUER = "https://appleid.apple.com"
+
+# ── 生产环境（wrangler deploy --env production） ──────────
+[env.production]
+name = "xiaohebao-api-production"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "xiaohebao-prod"
+database_id = ""  # TODO: 在 Cloudflare Dashboard 创建 D1 后填写
+
+[env.production.vars]
+ENABLE_DEV_BYPASS = "false"
+SESSION_TTL_HOURS = "720"
+APPLE_AUDIENCE = "com.meolord.xiaohebao"
 APPLE_ISSUER = "https://appleid.apple.com"
 

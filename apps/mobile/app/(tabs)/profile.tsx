@@ -77,20 +77,15 @@ export default function ProfilePage() {
             <Cloud size={16} color={theme.colors.textSecondary} />
             <Text style={styles.settingText}>iCloud 同步</Text>
           </View>
-          <Text style={styles.placeholderText}>占位</Text>
+          <Text style={styles.comingSoonText}>即将推出</Text>
         </View>
         <View style={styles.settingRow}>
           <View style={styles.settingLeft}>
             <Download size={16} color={theme.colors.textSecondary} />
             <Text style={styles.settingText}>导出数据</Text>
           </View>
-          <Text style={styles.placeholderText}>占位</Text>
+          <Text style={styles.comingSoonText}>即将推出</Text>
         </View>
-      </GlassCard>
-
-      <GlassCard>
-        <Text style={styles.placeholderLong}>{prefs?.iCloudSyncStatus}</Text>
-        <Text style={styles.placeholderLong}>{prefs?.exportStatus}</Text>
       </GlassCard>
 
       <Pressable style={styles.logout} onPress={() => clearSession()}>
@@ -162,14 +157,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: theme.colors.textSecondary
   },
-  placeholderText: {
-    fontSize: 12,
-    color: theme.colors.textMuted
-  },
-  placeholderLong: {
+  comingSoonText: {
     fontSize: 12,
     color: theme.colors.textMuted,
-    lineHeight: 18
+    fontStyle: "italic"
   },
   logout: {
     height: 48,
