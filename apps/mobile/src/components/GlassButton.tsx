@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 import { Pressable, StyleSheet, Text, type ViewStyle } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme } from "../theme";
@@ -9,6 +10,8 @@ type Props = {
   style?: ViewStyle;
   disabled?: boolean;
 };
+
+const Gradient = LinearGradient as unknown as ComponentType<any>;
 
 export function GlassButton({
   label,
@@ -44,9 +47,9 @@ export function GlassButton({
       style={({ pressed }) => [pressed && !disabled ? styles.pressed : null, style]}
       disabled={disabled}
     >
-      <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.primary, disabled ? styles.disabled : null]}>
+      <Gradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.primary, disabled ? styles.disabled : null]}>
         <Text style={styles.primaryLabel}>{label}</Text>
-      </LinearGradient>
+      </Gradient>
     </Pressable>
   );
 }

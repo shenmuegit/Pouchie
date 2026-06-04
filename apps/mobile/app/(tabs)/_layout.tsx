@@ -1,9 +1,12 @@
+import type { ComponentType } from "react";
 import { Redirect, Tabs } from "expo-router";
 import { BarChart3, House, PlusCircle, Receipt, User } from "lucide-react-native";
 import { StyleSheet, View } from "react-native";
 import { BlurView } from "expo-blur";
 import { theme } from "../../src/theme";
 import { useAuthStore } from "../../src/store/auth-store";
+
+const Blur = BlurView as unknown as ComponentType<any>;
 
 function TabIcon({
   focused,
@@ -36,7 +39,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarBackground: () => <BlurView tint="light" intensity={35} style={StyleSheet.absoluteFill} />,
+        tabBarBackground: () => <Blur tint="light" intensity={35} style={StyleSheet.absoluteFill} />,
         tabBarLabelStyle: styles.tabLabel
       }}
     >

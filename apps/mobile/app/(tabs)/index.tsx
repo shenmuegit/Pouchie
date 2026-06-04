@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { ArrowRight, TrendingDown, TrendingUp, Wallet } from "lucide-react-native";
+import { ArrowRight, CircleAlert, PlusCircle, TrendingDown, TrendingUp, Wallet } from "lucide-react-native";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { GlassCard } from "../../src/components/GlassCard";
 import { Page } from "../../src/components/Page";
 import { apiClient } from "../../src/lib/http";
 import { currentDateLabel, currentMonthKey } from "../../src/lib/date";
+import { buildBudgetInsight } from "../../src/lib/finance";
 import { formatMoney } from "../../src/lib/format";
 import { useAuthStore } from "../../src/store/auth-store";
 import { theme } from "../../src/theme";
@@ -24,9 +25,25 @@ export default function HomePage() {
   });
 
   const summary = summaryQuery.data;
+  const budgetInsight = buildBudgetInsight({
+    budgetTotalCents: summary?.budgetTotalCents ?? 0,
+    budgetUsedCents: summary?.budgetUsedCents ?? 0,
+    budgetProgress: summary?.budgetProgress ?? 0
+  });
 
   return (
     <Page title="财务概览" subtitle={currentDateLabel()}>
+      <Pressable style={styles.primaryAction} onPress={() => router.push("/(tabs)/add")}>
+        <View style={styles.primaryActionIcon}>
+          <PlusCircle size={24} color="#fff" />
+        </View>
+        <View style={styles.primaryActionText}>
+          <Text style={styles.primaryActionTitle}>立即记一笔</Text>
+          <Text style={styles.primaryActionSubtitle}>消费后马上记录，统计才有意义</Text>
+        </View>
+        <ArrowRight size={18} color={theme.colors.accentBlue} />
+      </Pressable>
+
       <View style={styles.grid}>
         <GlassCard style={styles.halfCard}>
           <View style={styles.metricHead}>
@@ -62,6 +79,27 @@ export default function HomePage() {
           <Text style={styles.metricLabel}>预算进度</Text>
           <Text style={styles.metricLabel}>{(summary?.budgetProgress ?? 0).toFixed(1)}%</Text>
         </View>
+        <View style={styles.budgetInsight}>
+          <CircleAlert
+            size={18}
+            color={
+              budgetInsight.tone === "danger"
+                ? theme.colors.accentRed
+                : theme.colors.accentBlue
+            }
+          />
+          <View style={styles.budgetInsightText}>
+            <Text
+              style={[
+                styles.budgetInsightTitle,
+                budgetInsight.tone === "danger" ? styles.dangerText : null
+              ]}
+            >
+              {budgetInsight.title}
+            </Text>
+            <Text style={styles.tinyLabel}>{budgetInsight.detail}</Text>
+          </View>
+        </View>
         <View style={styles.progressTrack}>
           <View
             style={[
@@ -93,24 +131,64 @@ export default function HomePage() {
         <Text style={styles.sectionTitle}>最近账单</Text>
       </View>
       <GlassCard style={styles.listCard}>
-        {(recentQuery.data?.items ?? []).map((item) => (
-          <View key={item.id} style={styles.row}>
-            <View style={styles.rowMain}>
-              <Text style={styles.rowTitle}>{item.name}</Text>
-              <Text style={styles.rowMeta}>{item.categoryName}</Text>
-            </View>
-            <Text style={[styles.rowAmount, item.type === "income" ? styles.income : null]}>
-              {item.type === "income" ? "+" : "-"}
-              {formatMoney(item.amountCents).replace("¥", "¥")}
-            </Text>
+        {(recentQuery.data?.items ?? []).length === 0 ? (
+          <View style={styles.emptyRecent}>
+            <Text style={styles.rowTitle}>还没有账单</Text>
+            <Text style={styles.rowMeta}>先从一笔支出开始，首页会立即更新。</Text>
           </View>
-        ))}
+        ) : (
+          (recentQuery.data?.items ?? []).map((item) => (
+            <View key={item.id} style={styles.row}>
+              <View style={styles.rowMain}>
+                <Text style={styles.rowTitle}>{item.name}</Text>
+                <Text style={styles.rowMeta}>{item.categoryName}</Text>
+              </View>
+              <Text style={[styles.rowAmount, item.type === "income" ? styles.income : null]}>
+                {item.type === "income" ? "+" : "-"}
+                {formatMoney(item.amountCents).replace("¥", "¥")}
+              </Text>
+            </View>
+          ))
+        )}
       </GlassCard>
     </Page>
   );
 }
 
 const styles = StyleSheet.create({
+  primaryAction: {
+    minHeight: 76,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.md,
+    backgroundColor: "rgba(255,255,255,0.72)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.72)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.md,
+    ...theme.shadow.card
+  },
+  primaryActionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: theme.colors.accentBlue
+  },
+  primaryActionText: {
+    flex: 1,
+    gap: 2
+  },
+  primaryActionTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: theme.colors.textPrimary
+  },
+  primaryActionSubtitle: {
+    fontSize: 12,
+    color: theme.colors.textMuted
+  },
   grid: {
     flexDirection: "row",
     gap: theme.spacing.sm
@@ -153,6 +231,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center"
+  },
+  budgetInsight: {
+    marginTop: theme.spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.sm
+  },
+  budgetInsightText: {
+    flex: 1,
+    gap: 2
+  },
+  budgetInsightTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: theme.colors.textPrimary
+  },
+  dangerText: {
+    color: theme.colors.accentRed
   },
   progressTrack: {
     marginVertical: theme.spacing.sm,
@@ -200,6 +296,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10
   },
   rowMain: {
+    flex: 1,
     gap: 2
   },
   rowTitle: {
@@ -218,6 +315,9 @@ const styles = StyleSheet.create({
   },
   income: {
     color: theme.colors.accentGreen
+  },
+  emptyRecent: {
+    paddingVertical: theme.spacing.md,
+    gap: 4
   }
 });
-

@@ -1,11 +1,14 @@
+import type { ComponentType } from "react";
 import { StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme } from "../theme";
 
+const Gradient = LinearGradient as unknown as ComponentType<any>;
+
 export function GlassBackground() {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <LinearGradient
+      <Gradient
         colors={[theme.colors.backgroundA, theme.colors.backgroundB, theme.colors.backgroundC]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -46,4 +49,3 @@ const styles = StyleSheet.create({
     backgroundColor: "#98E9ED"
   }
 });
-

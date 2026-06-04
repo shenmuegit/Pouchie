@@ -215,5 +215,26 @@ describe("domain entries", () => {
     );
     expect(validAfter).toBeNull();
   });
-});
 
+  it("Google 登录会创建用户、默认分类和会话", async () => {
+    const { context, repos, authProvider } = createTestContext();
+    authProvider.googleIdentity = {
+      googleSub: "google-sub-1",
+      email: "google@example.com",
+      displayName: "Google 用户"
+    };
+    const entries = createAppEntries(context);
+
+    const login = await entries.auth.googleLogin.execute({
+      idToken: "valid-google-token"
+    });
+
+    expect(login.user.email).toBe("google@example.com");
+    expect(repos.sessions.items[0].userId).toBe(login.user.id);
+    const categories = await entries.category.list.execute({
+      userId: login.user.id,
+      type: "expense"
+    });
+    expect(categories.items.length).toBeGreaterThan(0);
+  });
+});

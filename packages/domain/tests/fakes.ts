@@ -28,7 +28,13 @@ import type {
   UserRecord,
   UserRepository
 } from "../src/ports/repositories";
-import type { AppleIdentity, AuthProvider, Clock, TokenPair } from "../src/services";
+import type {
+  AppleIdentity,
+  AuthProvider,
+  Clock,
+  GoogleIdentity,
+  TokenPair
+} from "../src/services";
 import { getDateKeyInShanghai } from "../src/utils/time";
 
 let globalCounter = 1;
@@ -61,10 +67,19 @@ export class FakeAuthProvider implements AuthProvider {
     email: "test@example.com",
     displayName: "测试用户"
   };
+  googleIdentity: GoogleIdentity = {
+    googleSub: "google-sub-1",
+    email: "google@example.com",
+    displayName: "Google 用户"
+  };
   tokenCounter = 0;
 
   async verifyAppleIdToken(): Promise<AppleIdentity> {
     return this.appleIdentity;
+  }
+
+  async verifyGoogleIdToken(): Promise<GoogleIdentity> {
+    return this.googleIdentity;
   }
 
   async issueOpaqueToken(): Promise<TokenPair> {
@@ -77,7 +92,7 @@ export class FakeAuthProvider implements AuthProvider {
 }
 
 export class InMemoryUserRepo implements UserRepository {
-  readonly items: UserRecord[] = [];
+  readonly items: Array<UserRecord & { googleSub?: string | null }> = [];
 
   async findById(userId: string): Promise<UserRecord | null> {
     return this.items.find((x) => x.id === userId) ?? null;
@@ -87,15 +102,21 @@ export class InMemoryUserRepo implements UserRepository {
     return this.items.find((x) => x.appleSub === appleSub) ?? null;
   }
 
+  async findByGoogleSub(googleSub: string): Promise<UserRecord | null> {
+    return this.items.find((x) => x.googleSub === googleSub) ?? null;
+  }
+
   async create(input: {
     appleSub: string;
+    googleSub?: string;
     email: string | null;
     displayName: string | null;
   }): Promise<UserRecord> {
     const now = new Date().toISOString();
-    const row: UserRecord = {
+    const row: UserRecord & { googleSub?: string | null } = {
       id: nextId("user"),
       appleSub: input.appleSub,
+      googleSub: input.googleSub ?? null,
       email: input.email,
       displayName: input.displayName,
       createdAt: now,
@@ -615,4 +636,3 @@ export function createInMemoryRepos() {
     preferences
   };
 }
-

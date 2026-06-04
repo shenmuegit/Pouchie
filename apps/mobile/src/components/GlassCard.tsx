@@ -1,4 +1,4 @@
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, type ComponentType } from "react";
 import { StyleSheet, View, type ViewStyle } from "react-native";
 import { BlurView } from "expo-blur";
 import { theme } from "../theme";
@@ -7,11 +7,13 @@ type Props = PropsWithChildren<{
   style?: ViewStyle;
 }>;
 
+const Blur = BlurView as unknown as ComponentType<any>;
+
 export function GlassCard({ children, style }: Props) {
   return (
-    <BlurView intensity={theme.blur.card} tint="light" style={[styles.blur, style]}>
+    <Blur intensity={theme.blur.card} tint="light" style={[styles.blur, style]}>
       <View style={styles.inner}>{children}</View>
-    </BlurView>
+    </Blur>
   );
 }
 
@@ -28,4 +30,3 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg
   }
 });
-
