@@ -7,11 +7,11 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:mobile": "npm run dev --workspace @xiaohebao/mobile",
-    "dev:api": "npm run dev --workspace @xiaohebao/api-worker",
-    "build": "npm run -ws build --if-present",
-    "typecheck": "npm run -ws typecheck --if-present",
-    "test": "npm run -ws test --if-present"
+    "dev:mobile": "pnpm --filter @xiaohebao/mobile dev",
+    "dev:api": "pnpm --filter @xiaohebao/api-worker dev",
+    "build": "pnpm -r --if-present run build",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "test": "pnpm -r --if-present run test"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

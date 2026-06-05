@@ -17,10 +17,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.meolord.xiaohebao",
       "buildNumber": "1",
-      "usesAppleSignIn": true,
-      "infoPlist": {
-        "NSFaceIDUsageDescription": "小荷包使用 Face ID 保护你的账户安全"
-      }
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.meolord.xiaohebao",
@@ -33,11 +30,13 @@
     },
     "plugins": [
       "expo-router",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "expo-secure-store",
+      "expo-web-browser",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true
     }
   }
 }
-

@@ -2,25 +2,18 @@ import type {
   AnalyticsQuery,
   AnalyticsSummary,
   AnalyticsTrendPoint,
-  CreateCategoryRequest,
   CreateTransactionRequest,
   ListTransactionsQuery,
-  PatchProfilePreferencesRequest,
-  ProfilePreferences,
   TransactionType,
-  UpdateCategoryRequest,
   UpdateTransactionRequest
 } from "@xiaohebao/contracts";
-import { DEFAULT_CATEGORIES, DEFAULT_PREFERENCES } from "../src/defaults";
+import { DEFAULT_CATEGORIES } from "../src/defaults";
 import type {
   AnalyticsRepository,
-  BudgetRepository,
-  CategoryBudgetRecord,
+  CategoryCreateInput,
   CategoryRecord,
   CategoryRepository,
-  MonthlyBudgetRecord,
-  PreferenceRecord,
-  PreferenceRepository,
+  CategoryUpdateInput,
   SessionRecord,
   SessionRepository,
   TransactionRecord,
@@ -230,7 +223,7 @@ export class InMemoryCategoryRepo implements CategoryRepository {
     return this.items.find((x) => x.userId === userId && x.id === categoryId) ?? null;
   }
 
-  async create(userId: string, payload: CreateCategoryRequest): Promise<CategoryRecord> {
+  async create(userId: string, payload: CategoryCreateInput): Promise<CategoryRecord> {
     const now = new Date().toISOString();
     const row: CategoryRecord = {
       id: nextId("category"),
@@ -252,7 +245,7 @@ export class InMemoryCategoryRepo implements CategoryRepository {
   async update(
     userId: string,
     categoryId: string,
-    patch: UpdateCategoryRequest
+    patch: CategoryUpdateInput
   ): Promise<CategoryRecord | null> {
     const row = await this.findById(userId, categoryId);
     if (!row || row.deletedAt) return null;
@@ -439,82 +432,6 @@ export class InMemoryTransactionRepo implements TransactionRepository {
   }
 }
 
-export class InMemoryBudgetRepo implements BudgetRepository {
-  readonly monthly = new Map<string, MonthlyBudgetRecord>();
-  readonly category = new Map<string, CategoryBudgetRecord>();
-
-  private monthlyKey(userId: string, month: string): string {
-    return `${userId}:${month}`;
-  }
-
-  private categoryKey(userId: string, month: string, categoryId: string): string {
-    return `${userId}:${month}:${categoryId}`;
-  }
-
-  async getMonthlyBudget(
-    userId: string,
-    month: string
-  ): Promise<MonthlyBudgetRecord | null> {
-    return this.monthly.get(this.monthlyKey(userId, month)) ?? null;
-  }
-
-  async upsertMonthlyBudget(
-    userId: string,
-    month: string,
-    totalCents: number
-  ): Promise<MonthlyBudgetRecord> {
-    const key = this.monthlyKey(userId, month);
-    const current = this.monthly.get(key);
-    const now = new Date().toISOString();
-    if (current) {
-      current.totalCents = totalCents;
-      current.updatedAt = now;
-      return current;
-    }
-    const row: MonthlyBudgetRecord = {
-      userId,
-      month,
-      totalCents,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.monthly.set(key, row);
-    return row;
-  }
-
-  async listCategoryBudgets(userId: string, month: string): Promise<CategoryBudgetRecord[]> {
-    return [...this.category.values()].filter(
-      (x) => x.userId === userId && x.month === month
-    );
-  }
-
-  async upsertCategoryBudget(
-    userId: string,
-    month: string,
-    categoryId: string,
-    budgetCents: number
-  ): Promise<CategoryBudgetRecord> {
-    const key = this.categoryKey(userId, month, categoryId);
-    const current = this.category.get(key);
-    const now = new Date().toISOString();
-    if (current) {
-      current.budgetCents = budgetCents;
-      current.updatedAt = now;
-      return current;
-    }
-    const row: CategoryBudgetRecord = {
-      userId,
-      month,
-      categoryId,
-      budgetCents,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.category.set(key, row);
-    return row;
-  }
-}
-
 export class InMemoryAnalyticsRepo implements AnalyticsRepository {
   constructor(private readonly txRepo: InMemoryTransactionRepo) {}
 
@@ -585,54 +502,18 @@ export class InMemoryAnalyticsRepo implements AnalyticsRepository {
   }
 }
 
-export class InMemoryPreferenceRepo implements PreferenceRepository {
-  readonly items = new Map<string, PreferenceRecord>();
-
-  async getOrCreate(userId: string): Promise<PreferenceRecord> {
-    const existing = this.items.get(userId);
-    if (existing) return existing;
-    const now = new Date().toISOString();
-    const row: PreferenceRecord = {
-      userId,
-      ...DEFAULT_PREFERENCES,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.items.set(userId, row);
-    return row;
-  }
-
-  async patch(
-    userId: string,
-    patch: PatchProfilePreferencesRequest
-  ): Promise<PreferenceRecord> {
-    const row = await this.getOrCreate(userId);
-    if (patch.faceIdEnabled !== undefined) row.faceIdEnabled = patch.faceIdEnabled;
-    if (patch.defaultCurrency !== undefined) row.defaultCurrency = patch.defaultCurrency;
-    if (patch.notificationsEnabled !== undefined) {
-      row.notificationsEnabled = patch.notificationsEnabled;
-    }
-    row.updatedAt = new Date().toISOString();
-    return row;
-  }
-}
-
 export function createInMemoryRepos() {
   const users = new InMemoryUserRepo();
   const categories = new InMemoryCategoryRepo();
   const transactions = new InMemoryTransactionRepo(categories);
   const sessions = new InMemorySessionRepo();
-  const budgets = new InMemoryBudgetRepo();
   const analytics = new InMemoryAnalyticsRepo(transactions);
-  const preferences = new InMemoryPreferenceRepo();
 
   return {
     users,
     categories,
     transactions,
     sessions,
-    budgets,
-    analytics,
-    preferences
+    analytics
   };
 }

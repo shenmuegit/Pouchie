@@ -6,8 +6,6 @@ import type {
   AppleLoginRequest,
   AuthResponse,
   Category,
-  CategoryBudget,
-  CreateCategoryRequest,
   CreateTransactionRequest,
   DashboardRecentTransactions,
   DashboardSummary,
@@ -15,14 +13,8 @@ import type {
   GoogleLoginRequest,
   ListTransactionsQuery,
   ListTransactionsResponse,
-  MonthlyBudget,
-  PatchProfilePreferencesRequest,
   ProfileOverview,
-  ProfilePreferences,
   Transaction,
-  UpdateCategoryBudgetsRequest,
-  UpdateCategoryRequest,
-  UpdateMonthlyBudgetRequest,
   UpdateTransactionRequest,
   User
 } from "@xiaohebao/contracts";
@@ -65,33 +57,8 @@ export interface DeleteTransactionInput extends AuthenticatedInput {
   transactionId: string;
 }
 
-export interface CreateCategoryInput extends AuthenticatedInput {
-  payload: CreateCategoryRequest;
-}
-
-export interface UpdateCategoryInput extends AuthenticatedInput {
-  categoryId: string;
-  payload: UpdateCategoryRequest;
-}
-
-export interface DeleteCategoryInput extends AuthenticatedInput {
-  categoryId: string;
-}
-
-export interface UpdateMonthlyBudgetInput extends AuthenticatedInput {
-  payload: UpdateMonthlyBudgetRequest;
-}
-
-export interface UpdateCategoryBudgetsInput extends AuthenticatedInput {
-  payload: UpdateCategoryBudgetsRequest;
-}
-
 export interface AnalyticsInput extends AuthenticatedInput {
   query: AnalyticsQuery;
-}
-
-export interface PatchProfileInput extends AuthenticatedInput {
-  payload: PatchProfilePreferencesRequest;
 }
 
 export interface AuthEntry {
@@ -116,16 +83,6 @@ export interface TransactionEntry {
 
 export interface CategoryEntry {
   list: Entry<GetCategoriesInput, { items: Category[] }>;
-  create: Entry<CreateCategoryInput, Category>;
-  update: Entry<UpdateCategoryInput, Category>;
-  remove: Entry<DeleteCategoryInput, { success: true }>;
-}
-
-export interface BudgetEntry {
-  getMonthly: Entry<GetDashboardSummaryInput, MonthlyBudget>;
-  updateMonthly: Entry<UpdateMonthlyBudgetInput, MonthlyBudget>;
-  listCategoryBudgets: Entry<GetDashboardSummaryInput, { items: CategoryBudget[] }>;
-  updateCategoryBudgets: Entry<UpdateCategoryBudgetsInput, { items: CategoryBudget[] }>;
 }
 
 export interface AnalyticsEntry {
@@ -136,7 +93,6 @@ export interface AnalyticsEntry {
 
 export interface ProfileEntry {
   overview: Entry<AuthenticatedInput, ProfileOverview>;
-  patchPreferences: Entry<PatchProfileInput, ProfilePreferences>;
 }
 
 export interface AppEntries {
@@ -144,8 +100,6 @@ export interface AppEntries {
   dashboard: DashboardEntry;
   transaction: TransactionEntry;
   category: CategoryEntry;
-  budget: BudgetEntry;
   analytics: AnalyticsEntry;
   profile: ProfileEntry;
 }
-

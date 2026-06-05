@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@xiaohebao/contracts": "0.1.0"
+    "@xiaohebao/contracts": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^2.1.8"

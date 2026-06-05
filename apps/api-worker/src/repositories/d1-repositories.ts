@@ -2,25 +2,18 @@ import type {
   AnalyticsQuery,
   AnalyticsSummary,
   AnalyticsTrendPoint,
-  CreateCategoryRequest,
   CreateTransactionRequest,
   ListTransactionsQuery,
-  PatchProfilePreferencesRequest,
   TransactionType,
-  UpdateCategoryRequest,
   UpdateTransactionRequest
 } from "@xiaohebao/contracts";
 import {
   DEFAULT_CATEGORIES,
-  DEFAULT_PREFERENCES,
   type AnalyticsRepository,
-  type BudgetRepository,
-  type CategoryBudgetRecord,
+  type CategoryCreateInput,
   type CategoryRecord,
   type CategoryRepository,
-  type MonthlyBudgetRecord,
-  type PreferenceRecord,
-  type PreferenceRepository,
+  type CategoryUpdateInput,
   type SessionRecord,
   type SessionRepository,
   type TransactionRecord,
@@ -78,34 +71,6 @@ interface TransactionRow {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
-}
-
-interface MonthlyBudgetRow {
-  user_id: string;
-  month: string;
-  total_cents: number;
-  created_at: string;
-  updated_at: string;
-}
-
-interface CategoryBudgetRow {
-  user_id: string;
-  month: string;
-  category_id: string;
-  budget_cents: number;
-  created_at: string;
-  updated_at: string;
-}
-
-interface PreferenceRow {
-  user_id: string;
-  face_id_enabled: D1Bool;
-  default_currency: "CNY";
-  notifications_enabled: D1Bool;
-  icloud_sync_status: string;
-  export_status: string;
-  created_at: string;
-  updated_at: string;
 }
 
 function toBool(value: D1Bool): boolean {
@@ -167,40 +132,6 @@ function mapTransaction(row: TransactionRow): TransactionRecord {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at
-  };
-}
-
-function mapMonthlyBudget(row: MonthlyBudgetRow): MonthlyBudgetRecord {
-  return {
-    userId: row.user_id,
-    month: row.month,
-    totalCents: row.total_cents,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at
-  };
-}
-
-function mapCategoryBudget(row: CategoryBudgetRow): CategoryBudgetRecord {
-  return {
-    userId: row.user_id,
-    month: row.month,
-    categoryId: row.category_id,
-    budgetCents: row.budget_cents,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at
-  };
-}
-
-function mapPreference(row: PreferenceRow): PreferenceRecord {
-  return {
-    userId: row.user_id,
-    faceIdEnabled: toBool(row.face_id_enabled),
-    defaultCurrency: row.default_currency,
-    notificationsEnabled: toBool(row.notifications_enabled),
-    iCloudSyncStatus: row.icloud_sync_status,
-    exportStatus: row.export_status,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at
   };
 }
 
@@ -395,7 +326,7 @@ export class D1CategoryRepository implements CategoryRepository {
     return row ? mapCategory(row) : null;
   }
 
-  async create(userId: string, payload: CreateCategoryRequest): Promise<CategoryRecord> {
+  async create(userId: string, payload: CategoryCreateInput): Promise<CategoryRecord> {
     const id = uuid();
     const now = nowIso();
     await execute(
@@ -413,7 +344,7 @@ export class D1CategoryRepository implements CategoryRepository {
   async update(
     userId: string,
     categoryId: string,
-    patch: UpdateCategoryRequest
+    patch: CategoryUpdateInput
   ): Promise<CategoryRecord | null> {
     const current = await this.findById(userId, categoryId);
     if (!current || current.deletedAt) return null;
@@ -663,74 +594,6 @@ export class D1TransactionRepository implements TransactionRepository {
   }
 }
 
-export class D1BudgetRepository implements BudgetRepository {
-  constructor(private readonly db: D1Database) {}
-
-  async getMonthlyBudget(
-    userId: string,
-    month: string
-  ): Promise<MonthlyBudgetRecord | null> {
-    const row = await queryOne<MonthlyBudgetRow>(
-      this.db,
-      "SELECT * FROM monthly_budgets WHERE user_id = ? AND month = ?",
-      [userId, month]
-    );
-    return row ? mapMonthlyBudget(row) : null;
-  }
-
-  async upsertMonthlyBudget(
-    userId: string,
-    month: string,
-    totalCents: number
-  ): Promise<MonthlyBudgetRecord> {
-    const now = nowIso();
-    await execute(
-      this.db,
-      `INSERT INTO monthly_budgets (user_id, month, total_cents, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(user_id, month) DO UPDATE SET total_cents = excluded.total_cents, updated_at = excluded.updated_at`,
-      [userId, month, totalCents, now, now]
-    );
-    const row = await this.getMonthlyBudget(userId, month);
-    if (!row) throw new Error("月预算写入失败");
-    return row;
-  }
-
-  async listCategoryBudgets(userId: string, month: string): Promise<CategoryBudgetRecord[]> {
-    const rows = await queryAll<CategoryBudgetRow>(
-      this.db,
-      "SELECT * FROM category_budgets WHERE user_id = ? AND month = ?",
-      [userId, month]
-    );
-    return rows.map(mapCategoryBudget);
-  }
-
-  async upsertCategoryBudget(
-    userId: string,
-    month: string,
-    categoryId: string,
-    budgetCents: number
-  ): Promise<CategoryBudgetRecord> {
-    const now = nowIso();
-    await execute(
-      this.db,
-      `INSERT INTO category_budgets (
-        user_id, month, category_id, budget_cents, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?)
-      ON CONFLICT(user_id, month, category_id)
-      DO UPDATE SET budget_cents = excluded.budget_cents, updated_at = excluded.updated_at`,
-      [userId, month, categoryId, budgetCents, now, now]
-    );
-    const row = await queryOne<CategoryBudgetRow>(
-      this.db,
-      "SELECT * FROM category_budgets WHERE user_id = ? AND month = ? AND category_id = ?",
-      [userId, month, categoryId]
-    );
-    if (!row) throw new Error("分类预算写入失败");
-    return mapCategoryBudget(row);
-  }
-}
-
 export class D1AnalyticsRepository implements AnalyticsRepository {
   constructor(private readonly db: D1Database) {}
 
@@ -811,77 +674,5 @@ export class D1AnalyticsRepository implements AnalyticsRepository {
       categoryName: value.categoryName,
       amountCents: value.amount
     }));
-  }
-}
-
-export class D1PreferenceRepository implements PreferenceRepository {
-  constructor(private readonly db: D1Database) {}
-
-  async getOrCreate(userId: string): Promise<PreferenceRecord> {
-    const existing = await queryOne<PreferenceRow>(
-      this.db,
-      "SELECT * FROM user_preferences WHERE user_id = ?",
-      [userId]
-    );
-    if (existing) {
-      return mapPreference(existing);
-    }
-
-    const now = nowIso();
-    await execute(
-      this.db,
-      `INSERT INTO user_preferences (
-        user_id, face_id_enabled, default_currency, notifications_enabled, icloud_sync_status, export_status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        userId,
-        asD1Bool(DEFAULT_PREFERENCES.faceIdEnabled),
-        DEFAULT_PREFERENCES.defaultCurrency,
-        asD1Bool(DEFAULT_PREFERENCES.notificationsEnabled),
-        DEFAULT_PREFERENCES.iCloudSyncStatus,
-        DEFAULT_PREFERENCES.exportStatus,
-        now,
-        now
-      ]
-    );
-    const created = await queryOne<PreferenceRow>(
-      this.db,
-      "SELECT * FROM user_preferences WHERE user_id = ?",
-      [userId]
-    );
-    if (!created) throw new Error("用户偏好创建失败");
-    return mapPreference(created);
-  }
-
-  async patch(
-    userId: string,
-    patch: PatchProfilePreferencesRequest
-  ): Promise<PreferenceRecord> {
-    const current = await this.getOrCreate(userId);
-    const next = {
-      faceIdEnabled:
-        patch.faceIdEnabled !== undefined ? patch.faceIdEnabled : current.faceIdEnabled,
-      defaultCurrency:
-        patch.defaultCurrency !== undefined ? patch.defaultCurrency : current.defaultCurrency,
-      notificationsEnabled:
-        patch.notificationsEnabled !== undefined
-          ? patch.notificationsEnabled
-          : current.notificationsEnabled
-    };
-
-    await execute(
-      this.db,
-      `UPDATE user_preferences
-       SET face_id_enabled = ?, default_currency = ?, notifications_enabled = ?, updated_at = ?
-       WHERE user_id = ?`,
-      [
-        asD1Bool(next.faceIdEnabled),
-        next.defaultCurrency,
-        asD1Bool(next.notificationsEnabled),
-        nowIso(),
-        userId
-      ]
-    );
-    return this.getOrCreate(userId);
   }
 }

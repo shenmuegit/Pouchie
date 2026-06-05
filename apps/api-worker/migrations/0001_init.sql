@@ -54,38 +54,3 @@ CREATE TABLE IF NOT EXISTS transactions (
 );
 CREATE INDEX IF NOT EXISTS idx_transactions_user_occurred ON transactions(user_id, occurred_at);
 CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category_id);
-
-CREATE TABLE IF NOT EXISTS monthly_budgets (
-  user_id TEXT NOT NULL,
-  month TEXT NOT NULL,
-  total_cents INTEGER NOT NULL,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  PRIMARY KEY (user_id, month),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS category_budgets (
-  user_id TEXT NOT NULL,
-  month TEXT NOT NULL,
-  category_id TEXT NOT NULL,
-  budget_cents INTEGER NOT NULL,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  PRIMARY KEY (user_id, month, category_id),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS user_preferences (
-  user_id TEXT PRIMARY KEY,
-  face_id_enabled INTEGER NOT NULL DEFAULT 1,
-  default_currency TEXT NOT NULL DEFAULT 'CNY',
-  notifications_enabled INTEGER NOT NULL DEFAULT 1,
-  icloud_sync_status TEXT NOT NULL,
-  export_status TEXT NOT NULL,
-  created_at TEXT NOT NULL,
-  updated_at TEXT NOT NULL,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-

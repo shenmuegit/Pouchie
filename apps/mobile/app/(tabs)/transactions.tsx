@@ -1,10 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import {
   Alert,
   Modal,
-  Pressable,
   StyleSheet,
   Text,
   View
@@ -16,6 +14,7 @@ import { GlassInput } from "../../src/components/GlassInput";
 import { GlassModal } from "../../src/components/GlassModal";
 import { Page } from "../../src/components/Page";
 import { SwipeActionsRow } from "../../src/components/SwipeActionsRow";
+import { localizeCategoryName } from "../../src/lib/category-i18n";
 import { yuanTextToCents } from "../../src/lib/finance";
 import { apiClient } from "../../src/lib/http";
 import { formatMoney } from "../../src/lib/format";
@@ -27,22 +26,19 @@ type TabKey = "all" | "expense" | "income";
 export default function TransactionsPage() {
   const token = useAuthStore((s) => s.token)!;
   const [tab, setTab] = useState<TabKey>("all");
-  const [search, setSearch] = useState("");
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [editing, setEditing] = useState<{
     id: string;
-    name: string;
     amountText: string;
     note: string;
   } | null>(null);
   const client = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["transactions", tab, search],
+    queryKey: ["transactions", tab],
     queryFn: () =>
       apiClient.transactions.list(token, {
         type: tab === "all" ? undefined : tab,
-        search: search || undefined,
         groupBy: "date"
       })
   });
@@ -52,24 +48,17 @@ export default function TransactionsPage() {
     onSuccess: async () => {
       setPendingDeleteId(null);
       await client.invalidateQueries({ queryKey: ["transactions"] });
-      await client.invalidateQueries({ queryKey: ["dashboard-summary"] });
-      await client.invalidateQueries({ queryKey: ["dashboard-recent"] });
     }
   });
   const updateMutation = useMutation({
-    mutationFn: (payload: { id: string; name: string; amountText: string; note: string }) =>
+    mutationFn: (payload: { id: string; amountText: string; note: string }) =>
       apiClient.transactions.update(token, payload.id, {
-        name: payload.name,
         amountCents: yuanTextToCents(payload.amountText),
-        note: payload.note || null
+        note: payload.note.trim() || null
       }),
     onSuccess: async () => {
       setEditing(null);
       await client.invalidateQueries({ queryKey: ["transactions"] });
-      await client.invalidateQueries({ queryKey: ["dashboard-summary"] });
-      await client.invalidateQueries({ queryKey: ["dashboard-recent"] });
-      await client.invalidateQueries({ queryKey: ["analytics"] });
-      await client.invalidateQueries({ queryKey: ["budget-categories"] });
     }
   });
 
@@ -92,18 +81,6 @@ export default function TransactionsPage() {
 
   return (
     <Page title="账单明细" subtitle="按日期查看收支记录">
-      <GlassCard>
-        <View style={styles.searchWrap}>
-          <Search size={18} color={theme.colors.textMuted} />
-          <GlassInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="搜索账单名称"
-            style={styles.searchInput}
-          />
-        </View>
-      </GlassCard>
-
       <View style={styles.chips}>
         <GlassChip label={`全部 ${totals.all}`} selected={tab === "all"} onPress={() => setTab("all")} />
         <GlassChip
@@ -127,38 +104,40 @@ export default function TransactionsPage() {
           <View key={group.date} style={styles.group}>
             <Text style={styles.groupTitle}>{group.date}</Text>
             <GlassCard>
-              {group.items.map((item) => (
-                <SwipeActionsRow
-                  key={item.id}
-                  onEdit={() =>
-                    setEditing({
-                      id: item.id,
-                      name: item.name,
-                      amountText: (item.amountCents / 100).toFixed(2),
-                      note: item.note ?? ""
-                    })
-                  }
-                  onDelete={() => setPendingDeleteId(item.id)}
-                >
-                  <View style={styles.row}>
-                    <View style={styles.rowMain}>
-                      <Text style={styles.rowTitle}>{item.name}</Text>
-                      <Text style={styles.rowMeta}>
-                        {item.categoryName} · 左滑可编辑/删除
+              {group.items.map((item) => {
+                const note = item.note?.trim();
+                const categoryName = localizeCategoryName(item.categoryName);
+
+                return (
+                  <SwipeActionsRow
+                    key={item.id}
+                    onEdit={() =>
+                      setEditing({
+                        id: item.id,
+                        amountText: (item.amountCents / 100).toFixed(2),
+                        note: item.note ?? ""
+                      })
+                    }
+                    onDelete={() => setPendingDeleteId(item.id)}
+                  >
+                    <View style={styles.row}>
+                      <View style={styles.rowMain}>
+                        <Text style={styles.rowTitle}>{note || categoryName}</Text>
+                        {note ? <Text style={styles.rowMeta}>{categoryName}</Text> : null}
+                      </View>
+                      <Text
+                        style={[
+                          styles.rowAmount,
+                          item.type === "income" ? styles.income : null
+                        ]}
+                      >
+                        {item.type === "income" ? "+" : "-"}
+                        {formatMoney(item.amountCents)}
                       </Text>
                     </View>
-                    <Text
-                      style={[
-                        styles.rowAmount,
-                        item.type === "income" ? styles.income : null
-                      ]}
-                    >
-                      {item.type === "income" ? "+" : "-"}
-                      {formatMoney(item.amountCents)}
-                    </Text>
-                  </View>
-                </SwipeActionsRow>
-              ))}
+                  </SwipeActionsRow>
+                );
+              })}
             </GlassCard>
           </View>
         ))
@@ -182,16 +161,6 @@ export default function TransactionsPage() {
         <View style={styles.modalMask}>
           <GlassCard style={styles.modalCard}>
             <Text style={styles.modalTitle}>编辑账单</Text>
-            <View style={styles.modalField}>
-              <Text style={styles.modalLabel}>账单名称</Text>
-              <GlassInput
-                value={editing?.name ?? ""}
-                onChangeText={(text) =>
-                  setEditing((prev) => (prev ? { ...prev, name: text } : prev))
-                }
-                placeholder="账单名称"
-              />
-            </View>
             <View style={styles.modalField}>
               <Text style={styles.modalLabel}>金额（元）</Text>
               <GlassInput
@@ -223,10 +192,6 @@ export default function TransactionsPage() {
                 label={updateMutation.isPending ? "保存中..." : "保存编辑"}
                 onPress={() => {
                   if (!editing) return;
-                  if (!editing.name.trim()) {
-                    Alert.alert("请填写账单名称");
-                    return;
-                  }
                   if (yuanTextToCents(editing.amountText) <= 0) {
                     Alert.alert("请输入有效金额");
                     return;
@@ -243,14 +208,6 @@ export default function TransactionsPage() {
 }
 
 const styles = StyleSheet.create({
-  searchWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing.sm
-  },
-  searchInput: {
-    flex: 1
-  },
   chips: {
     flexDirection: "row",
     gap: theme.spacing.sm

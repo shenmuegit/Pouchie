@@ -89,10 +89,7 @@ export const dashboardSummarySchema = z.object({
   expenseCents: moneyCentsSchema.nonnegative(),
   incomeCents: moneyCentsSchema.nonnegative(),
   balanceCents: moneyCentsSchema,
-  todayExpenseCents: moneyCentsSchema.nonnegative(),
-  budgetTotalCents: moneyCentsSchema.nonnegative(),
-  budgetUsedCents: moneyCentsSchema.nonnegative(),
-  budgetProgress: z.number().min(0).max(100)
+  todayExpenseCents: moneyCentsSchema.nonnegative()
 });
 export type DashboardSummary = z.infer<typeof dashboardSummarySchema>;
 
@@ -144,66 +141,6 @@ export type UpdateTransactionRequest = z.infer<
   typeof updateTransactionRequestSchema
 >;
 
-export const createCategoryRequestSchema = z.object({
-  name: z.string().min(1).max(32),
-  type: transactionTypeSchema,
-  icon: z.string().min(1).max(32),
-  color: z.string().min(1).max(32)
-});
-export type CreateCategoryRequest = z.infer<typeof createCategoryRequestSchema>;
-
-export const updateCategoryRequestSchema = z.object({
-  name: z.string().min(1).max(32).optional(),
-  icon: z.string().min(1).max(32).optional(),
-  color: z.string().min(1).max(32).optional(),
-  isHidden: z.boolean().optional()
-});
-export type UpdateCategoryRequest = z.infer<typeof updateCategoryRequestSchema>;
-
-export const monthlyBudgetSchema = z.object({
-  month: monthSchema,
-  totalCents: moneyCentsSchema.nonnegative(),
-  usedCents: moneyCentsSchema.nonnegative(),
-  remainingCents: moneyCentsSchema,
-  progress: z.number().min(0)
-});
-export type MonthlyBudget = z.infer<typeof monthlyBudgetSchema>;
-
-export const categoryBudgetSchema = z.object({
-  categoryId: idSchema,
-  categoryName: z.string().min(1).max(32),
-  budgetCents: moneyCentsSchema.nonnegative(),
-  usedCents: moneyCentsSchema.nonnegative(),
-  remainingCents: moneyCentsSchema,
-  progress: z.number().min(0),
-  isOverBudget: z.boolean()
-});
-export type CategoryBudget = z.infer<typeof categoryBudgetSchema>;
-
-export const updateMonthlyBudgetRequestSchema = z.object({
-  month: monthSchema,
-  totalCents: moneyCentsSchema.nonnegative()
-});
-export type UpdateMonthlyBudgetRequest = z.infer<
-  typeof updateMonthlyBudgetRequestSchema
->;
-
-export const upsertCategoryBudgetItemSchema = z.object({
-  categoryId: idSchema,
-  budgetCents: moneyCentsSchema.nonnegative()
-});
-export type UpsertCategoryBudgetItem = z.infer<
-  typeof upsertCategoryBudgetItemSchema
->;
-
-export const updateCategoryBudgetsRequestSchema = z.object({
-  month: monthSchema,
-  items: z.array(upsertCategoryBudgetItemSchema)
-});
-export type UpdateCategoryBudgetsRequest = z.infer<
-  typeof updateCategoryBudgetsRequestSchema
->;
-
 export const analyticsSummarySchema = z.object({
   totalExpenseCents: moneyCentsSchema.nonnegative(),
   totalIncomeCents: moneyCentsSchema.nonnegative(),
@@ -233,30 +170,11 @@ export const analyticsQuerySchema = z.object({
 });
 export type AnalyticsQuery = z.infer<typeof analyticsQuerySchema>;
 
-export const profilePreferencesSchema = z.object({
-  faceIdEnabled: z.boolean(),
-  defaultCurrency: currencySchema,
-  notificationsEnabled: z.boolean(),
-  iCloudSyncStatus: z.string().min(1),
-  exportStatus: z.string().min(1)
-});
-export type ProfilePreferences = z.infer<typeof profilePreferencesSchema>;
-
-export const patchProfilePreferencesRequestSchema = z.object({
-  faceIdEnabled: z.boolean().optional(),
-  defaultCurrency: currencySchema.optional(),
-  notificationsEnabled: z.boolean().optional()
-});
-export type PatchProfilePreferencesRequest = z.infer<
-  typeof patchProfilePreferencesRequestSchema
->;
-
 export const profileOverviewSchema = z.object({
   user: userSchema,
   totalTransactions: z.number().int().nonnegative(),
   activeDays: z.number().int().nonnegative(),
-  categoryCount: z.number().int().nonnegative(),
-  preferences: profilePreferencesSchema
+  categoryCount: z.number().int().nonnegative()
 });
 export type ProfileOverview = z.infer<typeof profileOverviewSchema>;
 
@@ -265,4 +183,3 @@ export const apiErrorSchema = z.object({
   message: z.string().min(1)
 });
 export type ApiError = z.infer<typeof apiErrorSchema>;
-

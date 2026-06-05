@@ -60,77 +60,6 @@ describe("domain entries", () => {
     expect(list.groups[0].items[0].id).toBe(tx.id);
   });
 
-  it("预算超支计算正确", async () => {
-    const { context } = createTestContext();
-    const entries = createAppEntries(context);
-    const login = await entries.auth.devLogin.execute({
-      email: "budget@example.com",
-      displayName: "预算用户"
-    });
-    const expenseCategories = await entries.category.list.execute({
-      userId: login.user.id,
-      type: "expense"
-    });
-    const shopping = expenseCategories.items.find((x) => x.name === "购物");
-    expect(shopping).toBeTruthy();
-
-    await entries.budget.updateMonthly.execute({
-      userId: login.user.id,
-      payload: {
-        month: "2026-03",
-        totalCents: 10000
-      }
-    });
-
-    await entries.transaction.create.execute({
-      userId: login.user.id,
-      payload: {
-        name: "耳机",
-        amountCents: 12000,
-        type: "expense",
-        categoryId: shopping!.id,
-        occurredAt: "2026-03-25T10:00:00.000Z"
-      }
-    });
-
-    const monthly = await entries.budget.getMonthly.execute({
-      userId: login.user.id,
-      month: "2026-03"
-    });
-
-    expect(monthly.usedCents).toBe(12000);
-    expect(monthly.remainingCents).toBe(-2000);
-    expect(monthly.progress).toBeGreaterThan(100);
-  });
-
-  it("默认分类删除时转为隐藏", async () => {
-    const { context } = createTestContext();
-    const entries = createAppEntries(context);
-    const login = await entries.auth.devLogin.execute({
-      email: "category@example.com",
-      displayName: "分类用户"
-    });
-    const categories = await entries.category.list.execute({
-      userId: login.user.id,
-      type: "expense"
-    });
-    const target = categories.items.find((x) => x.name === "餐饮");
-    expect(target?.isDefault).toBe(true);
-
-    await entries.category.remove.execute({
-      userId: login.user.id,
-      categoryId: target!.id
-    });
-
-    const withHidden = await entries.category.list.execute({
-      userId: login.user.id,
-      type: "expense",
-      includeHidden: true
-    });
-    const hidden = withHidden.items.find((x) => x.id === target!.id);
-    expect(hidden?.isHidden).toBe(true);
-  });
-
   it("统计聚合可返回摘要、趋势与分类占比", async () => {
     const { context } = createTestContext();
     const entries = createAppEntries(context);
@@ -216,6 +145,28 @@ describe("domain entries", () => {
     expect(validAfter).toBeNull();
   });
 
+  it("已有开发用户登录时会补齐默认分类", async () => {
+    const { context, repos } = createTestContext();
+    const existing = await repos.users.create({
+      appleSub: "dev:seed@example.com",
+      email: "seed@example.com",
+      displayName: "种子账号"
+    });
+    const entries = createAppEntries(context);
+
+    const login = await entries.auth.devLogin.execute({
+      email: "seed@example.com",
+      displayName: "测试账号"
+    });
+
+    expect(login.user.id).toBe(existing.id);
+    const categories = await entries.category.list.execute({
+      userId: existing.id,
+      type: "expense"
+    });
+    expect(categories.items.length).toBeGreaterThan(0);
+  });
+
   it("Google 登录会创建用户、默认分类和会话", async () => {
     const { context, repos, authProvider } = createTestContext();
     authProvider.googleIdentity = {
@@ -237,4 +188,5 @@ describe("domain entries", () => {
     });
     expect(categories.items.length).toBeGreaterThan(0);
   });
+
 });

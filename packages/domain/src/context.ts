@@ -1,9 +1,7 @@
 import type { AuthProvider, Clock } from "./services";
 import type {
   AnalyticsRepository,
-  BudgetRepository,
   CategoryRepository,
-  PreferenceRepository,
   SessionRepository,
   TransactionRepository,
   UserRepository
@@ -15,9 +13,7 @@ export interface DomainContext {
     sessions: SessionRepository;
     categories: CategoryRepository;
     transactions: TransactionRepository;
-    budgets: BudgetRepository;
     analytics: AnalyticsRepository;
-    preferences: PreferenceRepository;
   };
   services: {
     authProvider: AuthProvider;
@@ -28,4 +24,3 @@ export interface DomainContext {
     sessionTtlHours: number;
   };
 }
-

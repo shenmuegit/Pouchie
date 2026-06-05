@@ -1,7 +1,10 @@
-import type { CreateCategoryRequest, TransactionType } from "@xiaohebao/contracts";
+import type { TransactionType } from "@xiaohebao/contracts";
 
-type PresetCategory = Omit<CreateCategoryRequest, "type"> & {
+type PresetCategory = {
   type: TransactionType;
+  name: string;
+  icon: string;
+  color: string;
 };
 
 export const DEFAULT_CATEGORIES: PresetCategory[] = [
@@ -20,12 +23,3 @@ export const DEFAULT_CATEGORIES: PresetCategory[] = [
   { type: "income", name: "投资", icon: "chart", color: "#059669" },
   { type: "income", name: "其他收入", icon: "more", color: "#16a34a" }
 ];
-
-export const DEFAULT_PREFERENCES = {
-  faceIdEnabled: true,
-  defaultCurrency: "CNY" as const,
-  notificationsEnabled: true,
-  iCloudSyncStatus: "占位：未接入 iCloud，同步功能将在后续版本开放",
-  exportStatus: "占位：导出功能将在后续版本开放"
-};
-

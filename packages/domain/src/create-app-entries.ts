@@ -2,10 +2,8 @@ import type {
   AnalyticsCategoryPoint,
   AnalyticsQuery,
   AuthResponse,
-  CategoryBudget,
   DashboardSummary,
   GroupedTransactions,
-  MonthlyBudget,
   Transaction,
   User
 } from "@xiaohebao/contracts";
@@ -81,66 +79,6 @@ function groupTransactionsByDate(items: TransactionRecord[]): GroupedTransaction
     }));
 }
 
-async function getMonthlyBudgetSnapshot(
-  ctx: DomainContext,
-  userId: string,
-  month: string
-): Promise<MonthlyBudget> {
-  const budget = await ctx.repos.budgets.getMonthlyBudget(userId, month);
-  const today = getDateKeyInShanghai(ctx.services.clock.now());
-  const summary = await ctx.repos.transactions.summarizeMonth(userId, month, today);
-  const total = budget?.totalCents ?? 0;
-  const used = summary.expenseCents;
-  const remaining = total - used;
-  const progress = total <= 0 ? 0 : clampPercentage((used / total) * 100);
-
-  return {
-    month,
-    totalCents: total,
-    usedCents: used,
-    remainingCents: remaining,
-    progress
-  };
-}
-
-async function listCategoryBudgetItems(
-  ctx: DomainContext,
-  userId: string,
-  month: string
-): Promise<CategoryBudget[]> {
-  const categories = await ctx.repos.categories.listByUser(userId, {
-    type: "expense",
-    includeHidden: true
-  });
-  const budgets = await ctx.repos.budgets.listCategoryBudgets(userId, month);
-  const spent = await ctx.repos.transactions.sumByCategoryForMonth(
-    userId,
-    month,
-    "expense"
-  );
-
-  const budgetMap = new Map(budgets.map((b) => [b.categoryId, b]));
-  const spentMap = new Map(spent.map((s) => [s.categoryId, s.amountCents]));
-
-  return categories
-    .filter((category) => !category.deletedAt && !category.isHidden)
-    .map((category) => {
-      const budget = budgetMap.get(category.id)?.budgetCents ?? 0;
-      const used = spentMap.get(category.id) ?? 0;
-      const remaining = budget - used;
-      const progress = budget <= 0 ? 0 : clampPercentage((used / budget) * 100);
-      return {
-        categoryId: category.id,
-        categoryName: category.name,
-        budgetCents: budget,
-        usedCents: used,
-        remainingCents: remaining,
-        progress,
-        isOverBudget: remaining < 0
-      };
-    });
-}
-
 function normalizeAnalyticsQuery(ctx: DomainContext, query: AnalyticsQuery): AnalyticsQuery {
   const range = resolveAnalyticsDateRange(
     ctx.services.clock.now(),
@@ -191,7 +129,6 @@ export function createAppEntries(ctx: DomainContext): AppEntries {
               email: identity.email ?? input.email ?? null,
               displayName: identity.displayName ?? input.displayName ?? null
             });
-            await ctx.repos.categories.ensureDefaultCategories(user.id);
           } else {
             user = await ctx.repos.users.updateProfile(user.id, {
               email: identity.email ?? user.email,
@@ -199,7 +136,7 @@ export function createAppEntries(ctx: DomainContext): AppEntries {
             });
           }
 
-          await ctx.repos.preferences.getOrCreate(user.id);
+          await ctx.repos.categories.ensureDefaultCategories(user.id);
           return buildAuthResponse(ctx, toPublicUser(user), now);
         }
       },
@@ -216,7 +153,6 @@ export function createAppEntries(ctx: DomainContext): AppEntries {
               email: identity.email,
               displayName: identity.displayName
             });
-            await ctx.repos.categories.ensureDefaultCategories(user.id);
           } else {
             user = await ctx.repos.users.updateProfile(user.id, {
               email: identity.email ?? user.email,
@@ -224,7 +160,7 @@ export function createAppEntries(ctx: DomainContext): AppEntries {
             });
           }
 
-          await ctx.repos.preferences.getOrCreate(user.id);
+          await ctx.repos.categories.ensureDefaultCategories(user.id);
           return buildAuthResponse(ctx, toPublicUser(user), now);
         }
       },
@@ -244,7 +180,6 @@ export function createAppEntries(ctx: DomainContext): AppEntries {
               email: input.email,
               displayName: input.displayName
             });
-            await ctx.repos.categories.ensureDefaultCategories(user.id);
           } else {
             user = await ctx.repos.users.updateProfile(user.id, {
               email: input.email,
@@ -252,7 +187,7 @@ export function createAppEntries(ctx: DomainContext): AppEntries {
             });
           }
 
-          await ctx.repos.preferences.getOrCreate(user.id);
+          await ctx.repos.categories.ensureDefaultCategories(user.id);
           return buildAuthResponse(ctx, toPublicUser(user), now);
         }
       },
@@ -277,23 +212,12 @@ export function createAppEntries(ctx: DomainContext): AppEntries {
             input.month,
             today
           );
-          const budget = await ctx.repos.budgets.getMonthlyBudget(input.userId, input.month);
-          const budgetTotalCents = budget?.totalCents ?? 0;
-          const budgetUsedCents = txSummary.expenseCents;
-          const budgetProgress =
-            budgetTotalCents <= 0
-              ? 0
-              : clampPercentage((budgetUsedCents / budgetTotalCents) * 100);
-
           const payload: DashboardSummary = {
             month: input.month,
             expenseCents: txSummary.expenseCents,
             incomeCents: txSummary.incomeCents,
             balanceCents: txSummary.incomeCents - txSummary.expenseCents,
-            todayExpenseCents: txSummary.todayExpenseCents,
-            budgetTotalCents,
-            budgetUsedCents,
-            budgetProgress
+            todayExpenseCents: txSummary.todayExpenseCents
           };
           return payload;
         }
@@ -389,109 +313,6 @@ export function createAppEntries(ctx: DomainContext): AppEntries {
           });
           return { items: items.filter((x) => !x.deletedAt) };
         }
-      },
-      create: {
-        execute: async (input) => {
-          await ensureUser(ctx, input.userId);
-          const existing = await ctx.repos.categories.listByUser(input.userId, {
-            type: input.payload.type,
-            includeHidden: true
-          });
-          const duplicate = existing.find(
-            (item) =>
-              !item.deletedAt &&
-              item.name.trim().toLowerCase() === input.payload.name.trim().toLowerCase()
-          );
-          if (duplicate) {
-            throw new ConflictError("分类名称已存在");
-          }
-          return ctx.repos.categories.create(input.userId, input.payload);
-        }
-      },
-      update: {
-        execute: async (input) => {
-          await ensureUser(ctx, input.userId);
-          const existing = await getCategoryOrThrow(ctx, input.userId, input.categoryId);
-          if (existing.isDefault && input.payload.name && input.payload.name !== existing.name) {
-            throw new ValidationError("默认分类不允许修改名称");
-          }
-          const updated = await ctx.repos.categories.update(
-            input.userId,
-            input.categoryId,
-            input.payload
-          );
-          if (!updated) {
-            throw new NotFoundError("分类不存在");
-          }
-          return updated;
-        }
-      },
-      remove: {
-        execute: async (input) => {
-          await ensureUser(ctx, input.userId);
-          const existing = await getCategoryOrThrow(ctx, input.userId, input.categoryId);
-          if (existing.isDefault) {
-            await ctx.repos.categories.update(input.userId, input.categoryId, {
-              isHidden: true
-            });
-            return { success: true as const };
-          }
-          await ctx.repos.categories.softDelete(
-            input.userId,
-            input.categoryId,
-            nowIso(ctx)
-          );
-          return { success: true as const };
-        }
-      }
-    },
-    budget: {
-      getMonthly: {
-        execute: async (input) => {
-          await ensureUser(ctx, input.userId);
-          return getMonthlyBudgetSnapshot(ctx, input.userId, input.month);
-        }
-      },
-      updateMonthly: {
-        execute: async (input) => {
-          await ensureUser(ctx, input.userId);
-          await ctx.repos.budgets.upsertMonthlyBudget(
-            input.userId,
-            input.payload.month,
-            input.payload.totalCents
-          );
-          return getMonthlyBudgetSnapshot(ctx, input.userId, input.payload.month);
-        }
-      },
-      listCategoryBudgets: {
-        execute: async (input) => {
-          await ensureUser(ctx, input.userId);
-          const items = await listCategoryBudgetItems(ctx, input.userId, input.month);
-          return { items };
-        }
-      },
-      updateCategoryBudgets: {
-        execute: async (input) => {
-          await ensureUser(ctx, input.userId);
-          for (const item of input.payload.items) {
-            const category = await getCategoryOrThrow(ctx, input.userId, item.categoryId);
-            if (category.type !== "expense") {
-              throw new ValidationError("仅支出分类支持预算");
-            }
-            await ctx.repos.budgets.upsertCategoryBudget(
-              input.userId,
-              input.payload.month,
-              item.categoryId,
-              item.budgetCents
-            );
-          }
-          const items = await listCategoryBudgetItems(
-            ctx,
-            input.userId,
-            input.payload.month
-          );
-          return { items };
-        }
       }
     },
     analytics: {
@@ -530,7 +351,6 @@ export function createAppEntries(ctx: DomainContext): AppEntries {
       overview: {
         execute: async (input) => {
           const user = await ensureUser(ctx, input.userId);
-          const preferences = await ctx.repos.preferences.getOrCreate(input.userId);
           const [totalTransactions, activeDays, categoryCount] = await Promise.all([
             ctx.repos.transactions.countByUser(input.userId),
             ctx.repos.transactions.countActiveDaysByUser(input.userId),
@@ -540,15 +360,8 @@ export function createAppEntries(ctx: DomainContext): AppEntries {
             user,
             totalTransactions,
             activeDays,
-            categoryCount,
-            preferences
+            categoryCount
           };
-        }
-      },
-      patchPreferences: {
-        execute: async (input) => {
-          await ensureUser(ctx, input.userId);
-          return ctx.repos.preferences.patch(input.userId, input.payload);
         }
       }
     }

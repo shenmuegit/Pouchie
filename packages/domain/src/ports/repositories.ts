@@ -3,14 +3,10 @@ import type {
   AnalyticsSummary,
   AnalyticsTrendPoint,
   Category,
-  CreateCategoryRequest,
   CreateTransactionRequest,
   ListTransactionsQuery,
-  PatchProfilePreferencesRequest,
-  ProfilePreferences,
   Transaction,
   TransactionType,
-  UpdateCategoryRequest,
   UpdateTransactionRequest,
   User
 } from "@xiaohebao/contracts";
@@ -34,33 +30,24 @@ export interface CategoryRecord extends Category {
   deletedAt: string | null;
 }
 
+export type CategoryCreateInput = {
+  name: string;
+  type: TransactionType;
+  icon: string;
+  color: string;
+};
+
+export type CategoryUpdateInput = {
+  name?: string;
+  icon?: string;
+  color?: string;
+  isHidden?: boolean;
+};
+
 export interface TransactionRecord extends Transaction {
   userId: string;
   updatedAt: string;
   deletedAt: string | null;
-}
-
-export interface MonthlyBudgetRecord {
-  userId: string;
-  month: string;
-  totalCents: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CategoryBudgetRecord {
-  userId: string;
-  month: string;
-  categoryId: string;
-  budgetCents: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface PreferenceRecord extends ProfilePreferences {
-  userId: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface UserRepository {
@@ -105,11 +92,11 @@ export interface CategoryRepository {
     }
   ): Promise<CategoryRecord[]>;
   findById(userId: string, categoryId: string): Promise<CategoryRecord | null>;
-  create(userId: string, payload: CreateCategoryRequest): Promise<CategoryRecord>;
+  create(userId: string, payload: CategoryCreateInput): Promise<CategoryRecord>;
   update(
     userId: string,
     categoryId: string,
-    patch: UpdateCategoryRequest
+    patch: CategoryUpdateInput
   ): Promise<CategoryRecord | null>;
   softDelete(userId: string, categoryId: string, deletedAt: string): Promise<void>;
   countByUser(userId: string): Promise<number>;
@@ -156,28 +143,6 @@ export interface TransactionRepository {
   countActiveDaysByUser(userId: string): Promise<number>;
 }
 
-export interface BudgetRepository {
-  getMonthlyBudget(
-    userId: string,
-    month: string
-  ): Promise<MonthlyBudgetRecord | null>;
-  upsertMonthlyBudget(
-    userId: string,
-    month: string,
-    totalCents: number
-  ): Promise<MonthlyBudgetRecord>;
-  listCategoryBudgets(
-    userId: string,
-    month: string
-  ): Promise<CategoryBudgetRecord[]>;
-  upsertCategoryBudget(
-    userId: string,
-    month: string,
-    categoryId: string,
-    budgetCents: number
-  ): Promise<CategoryBudgetRecord>;
-}
-
 export interface AnalyticsRepository {
   getSummary(userId: string, query: AnalyticsQuery): Promise<AnalyticsSummary>;
   getTrend(
@@ -194,12 +159,4 @@ export interface AnalyticsRepository {
       amountCents: number;
     }>
   >;
-}
-
-export interface PreferenceRepository {
-  getOrCreate(userId: string): Promise<PreferenceRecord>;
-  patch(
-    userId: string,
-    patch: PatchProfilePreferencesRequest
-  ): Promise<PreferenceRecord>;
 }

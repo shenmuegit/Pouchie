@@ -31,8 +31,6 @@ export default function RootLayout() {
         <Stack.Screen name="welcome" />
         <Stack.Screen name="signin" />
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="budget" />
-        <Stack.Screen name="categories" />
       </Stack>
     </QueryClientProvider>
   );
@@ -46,4 +44,3 @@ const styles = StyleSheet.create({
     backgroundColor: "#EDF6FF"
   }
 });
-

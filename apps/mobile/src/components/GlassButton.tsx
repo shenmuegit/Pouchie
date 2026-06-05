@@ -1,7 +1,8 @@
 import type { ComponentType } from "react";
-import { Pressable, StyleSheet, Text, type ViewStyle } from "react-native";
+import { StyleSheet, Text, type ViewStyle } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme } from "../theme";
+import { MotionPressable } from "./Motion";
 
 type Props = {
   label: string;
@@ -22,18 +23,17 @@ export function GlassButton({
 }: Props) {
   if (variant === "secondary") {
     return (
-      <Pressable
+      <MotionPressable
         onPress={onPress}
-        style={({ pressed }) => [
+        contentStyle={[
           styles.secondary,
-          pressed && !disabled ? styles.pressed : null,
           disabled ? styles.disabled : null,
           style
         ]}
         disabled={disabled}
       >
         <Text style={styles.secondaryLabel}>{label}</Text>
-      </Pressable>
+      </MotionPressable>
     );
   }
 
@@ -42,15 +42,15 @@ export function GlassButton({
       ? ["#EF4444", "#DC2626"]
       : [theme.colors.accentBlue, theme.colors.accentCyan];
   return (
-    <Pressable
+    <MotionPressable
       onPress={onPress}
-      style={({ pressed }) => [pressed && !disabled ? styles.pressed : null, style]}
+      contentStyle={style}
       disabled={disabled}
     >
       <Gradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.primary, disabled ? styles.disabled : null]}>
         <Text style={styles.primaryLabel}>{label}</Text>
       </Gradient>
-    </Pressable>
+    </MotionPressable>
   );
 }
 
@@ -80,9 +80,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: theme.colors.textPrimary
-  },
-  pressed: {
-    transform: [{ scale: 0.98 }]
   },
   disabled: {
     opacity: 0.58

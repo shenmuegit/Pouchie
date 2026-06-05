@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
-import { Cloud, Download, Lock, LogOut, User } from "lucide-react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { LogOut, User } from "lucide-react-native";
 import { GlassButton } from "../../src/components/GlassButton";
 import { GlassCard } from "../../src/components/GlassCard";
 import { Page } from "../../src/components/Page";
@@ -12,34 +12,24 @@ import { theme } from "../../src/theme";
 export default function ProfilePage() {
   const token = useAuthStore((s) => s.token)!;
   const clearSession = useAuthStore((s) => s.clearSession);
-  const client = useQueryClient();
 
   const overviewQuery = useQuery({
     queryKey: ["profile-overview"],
     queryFn: () => apiClient.profile.overview(token)
   });
-  const patchPreferences = useMutation({
-    mutationFn: apiClient.profile.patchPreferences.bind(null, token),
-    onSuccess: async () => {
-      await client.invalidateQueries({ queryKey: ["profile-overview"] });
-      await client.invalidateQueries({ queryKey: ["profile-preferences"] });
-    }
-  });
 
   const overview = overviewQuery.data;
-  const prefs = overview?.preferences;
 
   const stats = useMemo(
     () => [
       { label: "总账单数", value: overview?.totalTransactions ?? 0 },
-      { label: "记账天数", value: overview?.activeDays ?? 0 },
-      { label: "分类数量", value: overview?.categoryCount ?? 0 }
+      { label: "记账天数", value: overview?.activeDays ?? 0 }
     ],
     [overview]
   );
 
   return (
-    <Page title="我的" subtitle="账户与偏好设置">
+    <Page title="我的" subtitle="账户与记账状态">
       <GlassCard>
         <View style={styles.profileRow}>
           <View style={styles.avatar}>
@@ -61,39 +51,16 @@ export default function ProfilePage() {
         ))}
       </View>
 
-      <GlassCard>
-        <View style={styles.settingRow}>
-          <View style={styles.settingLeft}>
-            <Lock size={16} color={theme.colors.textSecondary} />
-            <Text style={styles.settingText}>Face ID</Text>
-          </View>
-          <Switch
-            value={prefs?.faceIdEnabled ?? false}
-            onValueChange={(value) => patchPreferences.mutate({ faceIdEnabled: value })}
-          />
-        </View>
-        <View style={styles.settingRow}>
-          <View style={styles.settingLeft}>
-            <Cloud size={16} color={theme.colors.textSecondary} />
-            <Text style={styles.settingText}>iCloud 同步</Text>
-          </View>
-          <Text style={styles.comingSoonText}>即将推出</Text>
-        </View>
-        <View style={styles.settingRow}>
-          <View style={styles.settingLeft}>
-            <Download size={16} color={theme.colors.textSecondary} />
-            <Text style={styles.settingText}>导出数据</Text>
-          </View>
-          <Text style={styles.comingSoonText}>即将推出</Text>
-        </View>
-      </GlassCard>
+      <GlassButton
+        label={overviewQuery.isFetching ? "刷新中..." : "刷新资料"}
+        variant="secondary"
+        onPress={() => overviewQuery.refetch()}
+      />
 
       <Pressable style={styles.logout} onPress={() => clearSession()}>
         <LogOut size={18} color={theme.colors.accentRed} />
         <Text style={styles.logoutText}>退出登录</Text>
       </Pressable>
-
-      <GlassButton label="刷新资料" variant="secondary" onPress={() => overviewQuery.refetch()} />
     </Page>
   );
 }
@@ -141,27 +108,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: theme.colors.textMuted
   },
-  settingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 10
-  },
-  settingLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing.xs
-  },
-  settingText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: theme.colors.textSecondary
-  },
-  comingSoonText: {
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    fontStyle: "italic"
-  },
   logout: {
     height: 48,
     borderRadius: theme.radius.md,
@@ -178,4 +124,3 @@ const styles = StyleSheet.create({
     fontWeight: "700"
   }
 });
-

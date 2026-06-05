@@ -1,25 +1,11 @@
 import type {
-  AnalyticsCategoryPoint,
-  AnalyticsQuery,
-  AnalyticsSummary,
-  AnalyticsTrendPoint,
   AuthResponse,
   Category,
-  CategoryBudget,
-  CreateCategoryRequest,
   CreateTransactionRequest,
-  DashboardRecentTransactions,
-  DashboardSummary,
   DevLoginRequest,
   ListTransactionsResponse,
-  MonthlyBudget,
-  PatchProfilePreferencesRequest,
   ProfileOverview,
-  ProfilePreferences,
   Transaction,
-  UpdateCategoryBudgetsRequest,
-  UpdateCategoryRequest,
-  UpdateMonthlyBudgetRequest,
   UpdateTransactionRequest
 } from "@xiaohebao/contracts";
 import { API_BASE_URL } from "./config";
@@ -43,14 +29,22 @@ function buildUrl(path: string, query?: RequestOptions["query"]): string {
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const response = await fetch(buildUrl(path, options.query), {
-    method: options.method ?? "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {})
-    },
-    body: options.body ? JSON.stringify(options.body) : undefined
-  });
+  const url = buildUrl(path, options.query);
+  const method = options.method ?? "GET";
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.token ? { Authorization: `Bearer ${options.token}` } : {})
+      },
+      body: options.body ? JSON.stringify(options.body) : undefined
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "网络请求失败";
+    throw new Error(`API 连接失败：${method} ${url} - ${message}`);
+  }
   if (!response.ok) {
     let message = "请求失败";
     try {
@@ -59,7 +53,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     } catch {
       // ignore
     }
-    throw new Error(message);
+    throw new Error(`请求失败：${method} ${url} (${response.status}) - ${message}`);
   }
   if (response.status === 204) {
     return undefined as T;
@@ -93,19 +87,6 @@ export const apiClient = {
     logout(token: string) {
       return request<{ success: true }>("/v1/auth/logout", {
         method: "POST",
-        token
-      });
-    }
-  },
-  dashboard: {
-    summary(token: string, month: string) {
-      return request<DashboardSummary>("/v1/dashboard/summary", {
-        token,
-        query: { month }
-      });
-    },
-    recent(token: string) {
-      return request<DashboardRecentTransactions>("/v1/dashboard/recent-transactions", {
         token
       });
     }
@@ -147,90 +128,11 @@ export const apiClient = {
           includeHidden: params?.includeHidden ? "true" : undefined
         }
       });
-    },
-    create(token: string, payload: CreateCategoryRequest) {
-      return request<Category>("/v1/categories", {
-        method: "POST",
-        token,
-        body: payload
-      });
-    },
-    update(token: string, id: string, payload: UpdateCategoryRequest) {
-      return request<Category>(`/v1/categories/${id}`, {
-        method: "PATCH",
-        token,
-        body: payload
-      });
-    },
-    remove(token: string, id: string) {
-      return request<{ success: true }>(`/v1/categories/${id}`, {
-        method: "DELETE",
-        token
-      });
-    }
-  },
-  budgets: {
-    monthly(token: string, month: string) {
-      return request<MonthlyBudget>("/v1/budgets/monthly", {
-        token,
-        query: { month }
-      });
-    },
-    updateMonthly(token: string, payload: UpdateMonthlyBudgetRequest) {
-      return request<MonthlyBudget>("/v1/budgets/monthly", {
-        method: "PUT",
-        token,
-        body: payload
-      });
-    },
-    categoryList(token: string, month: string) {
-      return request<{ items: CategoryBudget[] }>("/v1/budgets/categories", {
-        token,
-        query: { month }
-      });
-    },
-    updateCategories(token: string, payload: UpdateCategoryBudgetsRequest) {
-      return request<{ items: CategoryBudget[] }>("/v1/budgets/categories", {
-        method: "PUT",
-        token,
-        body: payload
-      });
-    }
-  },
-  analytics: {
-    summary(token: string, query: AnalyticsQuery) {
-      return request<AnalyticsSummary>("/v1/analytics/summary", {
-        token,
-        query
-      });
-    },
-    trend(token: string, query: AnalyticsQuery) {
-      return request<{ items: AnalyticsTrendPoint[] }>("/v1/analytics/trend", {
-        token,
-        query
-      });
-    },
-    categories(token: string, query: AnalyticsQuery) {
-      return request<{ items: AnalyticsCategoryPoint[] }>("/v1/analytics/categories", {
-        token,
-        query
-      });
     }
   },
   profile: {
     overview(token: string) {
       return request<ProfileOverview>("/v1/profile/overview", { token });
-    },
-    preferences(token: string) {
-      return request<ProfilePreferences>("/v1/profile/preferences", { token });
-    },
-    patchPreferences(token: string, payload: PatchProfilePreferencesRequest) {
-      return request<ProfilePreferences>("/v1/profile/preferences", {
-        method: "PATCH",
-        token,
-        body: payload
-      });
     }
   }
 };
-

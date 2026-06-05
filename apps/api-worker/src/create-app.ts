@@ -3,23 +3,16 @@ import { cors } from "hono/cors";
 import {
   analyticsQuerySchema,
   appleLoginRequestSchema,
-  createCategoryRequestSchema,
   createTransactionRequestSchema,
   devLoginRequestSchema,
   googleLoginRequestSchema,
   listTransactionsQuerySchema,
-  patchProfilePreferencesRequestSchema,
-  updateCategoryBudgetsRequestSchema,
-  updateCategoryRequestSchema,
-  updateMonthlyBudgetRequestSchema,
   updateTransactionRequestSchema
 } from "@xiaohebao/contracts";
 import { createAppEntries, systemClock, ValidationError } from "@xiaohebao/domain";
 import {
   D1AnalyticsRepository,
-  D1BudgetRepository,
   D1CategoryRepository,
-  D1PreferenceRepository,
   D1SessionRepository,
   D1TransactionRepository,
   D1UserRepository
@@ -47,9 +40,7 @@ function buildDefaultEntries(env: Env) {
     sessions: new D1SessionRepository(env.DB),
     categories: new D1CategoryRepository(env.DB),
     transactions: new D1TransactionRepository(env.DB),
-    budgets: new D1BudgetRepository(env.DB),
-    analytics: new D1AnalyticsRepository(env.DB),
-    preferences: new D1PreferenceRepository(env.DB)
+    analytics: new D1AnalyticsRepository(env.DB)
   };
 
   return {
@@ -120,14 +111,14 @@ export function createApiApp(options?: { buildEntries?: BuildEntriesFn }) {
 <h2>一、收集的信息</h2>
 <ul>
   <li><strong>Apple 账号信息</strong>：通过 Sign in with Apple 登录时，您可选择是否共享姓名和邮箱地址，仅用于显示账户资料。</li>
-  <li><strong>财务记录</strong>：您手动录入的收支账单、分类与预算数据，存储于您的账户中，仅用于提供记账功能。</li>
+  <li><strong>财务记录</strong>：您手动录入的收支账单与分类数据，存储于您的账户中，仅用于提供记账功能。</li>
 </ul>
 
 <h2>二、信息使用</h2>
-<p>我们收集的信息仅用于提供本应用的核心功能（记账、统计、预算管理）。我们不会将您的数据用于广告投放，也不会出售给任何第三方。</p>
+<p>我们收集的信息仅用于提供本应用的核心功能（记账、账单查询与分类选择）。我们不会将您的数据用于广告投放，也不会出售给任何第三方。</p>
 
 <h2>三、数据存储与安全</h2>
-<p>所有数据存储于 Cloudflare 提供的安全基础设施中，所有网络通信均通过 HTTPS 加密传输。本应用支持 Face ID 保护，防止他人未经授权访问您的账户。</p>
+<p>所有数据存储于 Cloudflare 提供的安全基础设施中，所有网络通信均通过 HTTPS 加密传输。</p>
 
 <h2>四、第三方共享</h2>
 <p>我们不会主动向任何第三方共享您的个人信息，法律法规要求的情况除外。</p>
@@ -175,8 +166,7 @@ export function createApiApp(options?: { buildEntries?: BuildEntriesFn }) {
 
 <h2>常见问题</h2>
 <ul>
-  <li><strong>如何添加账单？</strong>点击底部导航栏中央的"＋"按钮即可快速记账。</li>
-  <li><strong>如何设置预算？</strong>在首页点击"预算管理"，可设置月总预算及每个分类的预算上限。</li>
+  <li><strong>如何添加账单？</strong>点击底部"记账"即可记录一笔收支。</li>
   <li><strong>如何删除账单？</strong>在"账单"页面左滑条目，选择删除。</li>
   <li><strong>如何退出登录？</strong>进入"我的"页面，点击底部"退出登录"。</li>
   <li><strong>如何删除账户？</strong>请发送邮件至上方地址，注明"删除账户"，我们将在 7 个工作日内处理。</li>
@@ -383,110 +373,6 @@ export function createApiApp(options?: { buildEntries?: BuildEntriesFn }) {
     }
   });
 
-  app.post("/v1/categories", async (c) => {
-    try {
-      const { entries } = buildEntries(c.env);
-      const auth = c.get("auth");
-      const payload = createCategoryRequestSchema.parse(await c.req.json());
-      return c.json(
-        await entries.category.create.execute({
-          userId: auth.userId,
-          payload
-        })
-      );
-    } catch (error) {
-      return toErrorResponse(c, error);
-    }
-  });
-
-  app.patch("/v1/categories/:id", async (c) => {
-    try {
-      const { entries } = buildEntries(c.env);
-      const auth = c.get("auth");
-      const payload = updateCategoryRequestSchema.parse(await c.req.json());
-      return c.json(
-        await entries.category.update.execute({
-          userId: auth.userId,
-          categoryId: c.req.param("id"),
-          payload
-        })
-      );
-    } catch (error) {
-      return toErrorResponse(c, error);
-    }
-  });
-
-  app.delete("/v1/categories/:id", async (c) => {
-    try {
-      const { entries } = buildEntries(c.env);
-      const auth = c.get("auth");
-      return c.json(
-        await entries.category.remove.execute({
-          userId: auth.userId,
-          categoryId: c.req.param("id")
-        })
-      );
-    } catch (error) {
-      return toErrorResponse(c, error);
-    }
-  });
-
-  app.get("/v1/budgets/monthly", async (c) => {
-    try {
-      const { entries } = buildEntries(c.env);
-      const auth = c.get("auth");
-      const month = parseMonth(c.req.query("month"));
-      return c.json(await entries.budget.getMonthly.execute({ userId: auth.userId, month }));
-    } catch (error) {
-      return toErrorResponse(c, error);
-    }
-  });
-
-  app.put("/v1/budgets/monthly", async (c) => {
-    try {
-      const { entries } = buildEntries(c.env);
-      const auth = c.get("auth");
-      const payload = updateMonthlyBudgetRequestSchema.parse(await c.req.json());
-      return c.json(
-        await entries.budget.updateMonthly.execute({
-          userId: auth.userId,
-          payload
-        })
-      );
-    } catch (error) {
-      return toErrorResponse(c, error);
-    }
-  });
-
-  app.get("/v1/budgets/categories", async (c) => {
-    try {
-      const { entries } = buildEntries(c.env);
-      const auth = c.get("auth");
-      const month = parseMonth(c.req.query("month"));
-      return c.json(
-        await entries.budget.listCategoryBudgets.execute({ userId: auth.userId, month })
-      );
-    } catch (error) {
-      return toErrorResponse(c, error);
-    }
-  });
-
-  app.put("/v1/budgets/categories", async (c) => {
-    try {
-      const { entries } = buildEntries(c.env);
-      const auth = c.get("auth");
-      const payload = updateCategoryBudgetsRequestSchema.parse(await c.req.json());
-      return c.json(
-        await entries.budget.updateCategoryBudgets.execute({
-          userId: auth.userId,
-          payload
-        })
-      );
-    } catch (error) {
-      return toErrorResponse(c, error);
-    }
-  });
-
   app.get("/v1/analytics/summary", async (c) => {
     try {
       const { entries } = buildEntries(c.env);
@@ -527,33 +413,6 @@ export function createApiApp(options?: { buildEntries?: BuildEntriesFn }) {
         dateTo: c.req.query("dateTo")
       });
       return c.json(await entries.analytics.categories.execute({ userId: auth.userId, query }));
-    } catch (error) {
-      return toErrorResponse(c, error);
-    }
-  });
-
-  app.get("/v1/profile/preferences", async (c) => {
-    try {
-      const { entries } = buildEntries(c.env);
-      const auth = c.get("auth");
-      const data = await entries.profile.overview.execute({ userId: auth.userId });
-      return c.json(data.preferences);
-    } catch (error) {
-      return toErrorResponse(c, error);
-    }
-  });
-
-  app.patch("/v1/profile/preferences", async (c) => {
-    try {
-      const { entries } = buildEntries(c.env);
-      const auth = c.get("auth");
-      const payload = patchProfilePreferencesRequestSchema.parse(await c.req.json());
-      return c.json(
-        await entries.profile.patchPreferences.execute({
-          userId: auth.userId,
-          payload
-        })
-      );
     } catch (error) {
       return toErrorResponse(c, error);
     }

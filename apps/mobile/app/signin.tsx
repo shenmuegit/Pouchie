@@ -2,9 +2,9 @@ import { router } from "expo-router";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
-import { Apple, Eye, Lock, ShieldCheck } from "lucide-react-native";
 import { ActivityIndicator, Alert, Platform, StyleSheet, Text, View } from "react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import type { AuthResponse } from "@xiaohebao/contracts";
 import { Page } from "../src/components/Page";
 import { GlassCard } from "../src/components/GlassCard";
 import { GlassButton } from "../src/components/GlassButton";
@@ -21,19 +21,35 @@ WebBrowser.maybeCompleteAuthSession();
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "";
 const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? "";
 
-export default function SignInPage() {
-  const devLogin = useDevLogin();
-  const setSession = useAuthStore((s) => s.setSession);
-  const [pending, setPending] = useState(false);
-
-  // ── Google Sign In (Android) ──────────────────────────────────────────────
-  const [googleRequest, googleResponse, googlePromptAsync] = Google.useAuthRequest({
+function AndroidGoogleSignInButton({
+  pending,
+  setPending,
+  setSession
+}: {
+  pending: boolean;
+  setPending: Dispatch<SetStateAction<boolean>>;
+  setSession: (session: { token: string; user: AuthResponse["user"] }) => Promise<void>;
+}) {
+  const [, googleResponse, googlePromptAsync] = Google.useAuthRequest({
     webClientId: GOOGLE_WEB_CLIENT_ID,
     androidClientId: GOOGLE_ANDROID_CLIENT_ID,
     scopes: ["openid", "profile", "email"]
   });
 
   useEffect(() => {
+    const handleGoogleIdToken = async (idToken: string) => {
+      try {
+        const auth = await apiClient.auth.googleLogin({ idToken });
+        await setSession({ token: auth.token, user: auth.user });
+        router.replace("/(tabs)");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Google 登录失败，请重试";
+        Alert.alert("登录失败", message);
+      } finally {
+        setPending(false);
+      }
+    };
+
     if (googleResponse?.type === "success") {
       const idToken = googleResponse.authentication?.idToken;
       if (idToken) {
@@ -48,23 +64,10 @@ export default function SignInPage() {
     } else if (googleResponse?.type === "dismiss") {
       setPending(false);
     }
-  }, [googleResponse]);
-
-  const handleGoogleIdToken = async (idToken: string) => {
-    try {
-      const auth = await apiClient.auth.googleLogin({ idToken });
-      await setSession({ token: auth.token, user: auth.user });
-      router.replace("/(tabs)");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Google 登录失败，请重试";
-      Alert.alert("登录失败", message);
-    } finally {
-      setPending(false);
-    }
-  };
+  }, [googleResponse, setPending, setSession]);
 
   const handleGoogleSign = () => {
-    if (!GOOGLE_WEB_CLIENT_ID) {
+    if (!GOOGLE_WEB_CLIENT_ID || !GOOGLE_ANDROID_CLIENT_ID) {
       Alert.alert("配置缺失", "Google 登录尚未配置，请使用开发测试账号登录");
       return;
     }
@@ -72,8 +75,23 @@ export default function SignInPage() {
     googlePromptAsync();
   };
 
+  return (
+    <GlassButton
+      label={pending ? "正在登录..." : "使用 Google 登录"}
+      onPress={handleGoogleSign}
+    />
+  );
+}
+
+export default function SignInPage() {
+  const devLogin = useDevLogin();
+  const setSession = useAuthStore((s) => s.setSession);
+  const [pending, setPending] = useState(false);
+  const [pendingLabel, setPendingLabel] = useState("正在验证身份...");
+
   // ── Apple Sign In (iOS) ───────────────────────────────────────────────────
   const handleAppleSign = async () => {
+    setPendingLabel("正在验证身份...");
     setPending(true);
     try {
       const isAvailable = await AppleAuthentication.isAvailableAsync();
@@ -126,6 +144,7 @@ export default function SignInPage() {
   };
 
   const handleDevSignIn = async () => {
+    setPendingLabel("正在连接开发服务...");
     setPending(true);
     try {
       await devLogin.mutateAsync({
@@ -133,6 +152,9 @@ export default function SignInPage() {
         displayName: "测试账号"
       });
       router.replace("/(tabs)");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "开发登录失败，请重试";
+      Alert.alert("开发登录失败", message);
     } finally {
       setPending(false);
     }
@@ -141,13 +163,14 @@ export default function SignInPage() {
   const isAndroid = Platform.OS === "android";
 
   return (
-    <Page title="欢迎使用小荷包" subtitle="安全登录，开启你的理财之旅">
+    <Page title="欢迎使用小荷包" subtitle="登录后开始记账">
       <GlassCard>
         <View style={styles.signInCard}>
           {isAndroid ? (
-            <GlassButton
-              label={pending ? "正在登录..." : "使用 Google 登录"}
-              onPress={handleGoogleSign}
+            <AndroidGoogleSignInButton
+              pending={pending}
+              setPending={setPending}
+              setSession={setSession}
             />
           ) : (
             <GlassButton
@@ -159,38 +182,13 @@ export default function SignInPage() {
           {pending ? (
             <View style={styles.loading}>
               <ActivityIndicator color={theme.colors.accentBlue} />
-              <Text style={styles.tip}>正在验证身份...</Text>
+              <Text style={styles.tip}>{pendingLabel}</Text>
             </View>
           ) : null}
         </View>
       </GlassCard>
 
-      <GlassCard>
-        <View style={styles.security}>
-          <View style={styles.row}>
-            <ShieldCheck color={theme.colors.accentBlue} size={18} />
-            <Text style={styles.rowText}>
-              {isAndroid ? "Google 身份认证保障账户安全" : "Apple 身份认证保障账户安全"}
-            </Text>
-          </View>
-          <View style={styles.row}>
-            <Lock color={theme.colors.accentBlue} size={18} />
-            <Text style={styles.rowText}>账单数据默认加密存储</Text>
-          </View>
-          <View style={styles.row}>
-            <Eye color={theme.colors.accentBlue} size={18} />
-            <Text style={styles.rowText}>
-              {isAndroid ? "支持指纹 / 图案锁屏保护" : "支持 Face ID 快速解锁"}
-            </Text>
-          </View>
-          {!isAndroid && (
-            <View style={styles.appleMark}>
-              <Apple color={theme.colors.textMuted} size={16} />
-              <Text style={styles.appleText}>当前已支持 Apple Token 服务端校验</Text>
-            </View>
-          )}
-        </View>
-      </GlassCard>
+      <Text style={styles.devNote}>开发阶段优先使用测试账号，便于快速验证记账流程。</Text>
     </Page>
   );
 }
@@ -211,28 +209,7 @@ const styles = StyleSheet.create({
   devNote: {
     fontSize: 12,
     color: theme.colors.textMuted,
-    lineHeight: 18
-  },
-  security: {
-    gap: theme.spacing.sm
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing.sm
-  },
-  rowText: {
-    fontSize: 14,
-    color: theme.colors.textSecondary
-  },
-  appleMark: {
-    marginTop: theme.spacing.sm,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing.xs
-  },
-  appleText: {
-    fontSize: 12,
-    color: theme.colors.textMuted
+    lineHeight: 18,
+    textAlign: "center"
   }
 });
