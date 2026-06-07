@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pouchie · 手账本</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&family=Caveat:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #e3dccb; -webkit-font-smoothing: antialiased; }
+  body { font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  .design-canvas *::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  .design-canvas * { scrollbar-width: none; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="frames/ios-frame.jsx"></script>
+<script type="text/babel" src="frames/design-canvas.jsx"></script>
+<script type="text/babel" src="app/tokens.jsx"></script>
+<script type="text/babel" src="app/data.jsx"></script>
+<script type="text/babel" src="app/vhelpers.jsx"></script>
+<script type="text/babel" src="app/nb1.jsx"></script>
+<script type="text/babel" src="app/nb2.jsx"></script>
+
+<script type="text/babel">
+function Phone({ children }) {
+  return (
+    <div style={{ width: 446, height: 918, background: '#e3dccb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <IOSDevice width={402} height={874}>{children}</IOSDevice>
+    </div>
+  );
+}
+const SCREENS = [
+  ['home', '01 · 首页总览', NbHome],
+  ['add', '02 · 记一笔', NbAdd],
+  ['list', '03 · 明细列表', NbLedger],
+  ['report', '04 · 报表统计', NbReports],
+  ['shared', '05 · 共同账本 / 分摊', NbShared],
+  ['detail', '06 · 账单详情', NbDetail],
+  ['goal', '07 · 攒钱目标', NbGoal],
+];
+function App() {
+  return (
+    <DesignCanvas initialScale={0.6}>
+      <DCSection id="nb" title="Pouchie · 手账本（完整版）"
+        subtitle="横线纸 + 红色边线 · 马善政手写体 + Caveat 手写数字 · 和纸胶带 / 便利贴 / 手绘框 / 涂鸦下划线。最治愈的一版。点任意卡片标签可全屏聚焦。">
+        {SCREENS.map(([id, label, Comp]) => (
+          <DCArtboard key={id} id={id} label={label} width={446} height={918} style={{ background: '#e3dccb' }}>
+            <Phone><Comp /></Phone>
+          </DCArtboard>
+        ))}
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

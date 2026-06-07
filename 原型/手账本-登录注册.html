@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pouchie · 手账本登录注册</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Zhi+Mang+Xing&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #e3dccb; -webkit-font-smoothing: antialiased; }
+  body { font-family: 'PingFang SC', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+  .design-canvas *::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  .design-canvas * { scrollbar-width: none; }
+  @keyframes nbspin { to { transform: rotate(360deg); } }
+  @keyframes nbbounce { 0%, 100% { transform: translateY(0); opacity: 0.5; } 50% { transform: translateY(-7px); opacity: 1; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="frames/ios-frame.jsx"></script>
+<script type="text/babel" src="frames/design-canvas.jsx"></script>
+<script type="text/babel" src="app/tokens.jsx"></script>
+<script type="text/babel" src="app/nb1.jsx"></script>
+<script type="text/babel" src="app/nb_auth_app.jsx"></script>
+<script type="text/babel" src="app/nb_auth_mini.jsx"></script>
+
+<script type="text/babel">
+function Phone({ children }) {
+  return (
+    <div style={{ width: 446, height: 918, background: '#e3dccb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <IOSDevice width={402} height={874}>{children}</IOSDevice>
+    </div>
+  );
+}
+const APP = [
+  ['w', '01 · 欢迎页', AuAppWelcome],
+  ['r', '02 · 邮箱注册', AuAppRegister],
+  ['l', '03 · 邮箱登录', AuAppLogin],
+  ['v', '04 · 验证码', AuAppVerify],
+];
+const MINI = [
+  ['i', '05 · 首次欢迎 / 品牌引导', AuMiniIntro],
+  ['p', '06 · 微信手机号授权', AuMiniPhone],
+  ['o', '07 · 登录中 / 授权加载', AuMiniLoading],
+];
+function App() {
+  return (
+    <DesignCanvas initialScale={0.6}>
+      <DCSection id="app" title="① App 端 · iOS / Android（Apple / Google 登录）"
+        subtitle="第三方一键登录 + 邮箱注册登录 + 邮箱验证码。沿用手账本视觉：横线纸、手写体、和纸胶带、便利贴、手绘输入框。">
+        {APP.map(([id, label, Comp]) => (
+          <DCArtboard key={id} id={id} label={label} width={446} height={918} style={{ background: '#e3dccb' }}>
+            <Phone><Comp /></Phone>
+          </DCArtboard>
+        ))}
+      </DCSection>
+      <DCSection id="mini" title="② 微信小程序端 · 手机号一键登录"
+        subtitle="微信手机号授权登录，未注册自动创建账号。含品牌引导页、微信系统授权弹层、授权登录加载态。顶部为小程序胶囊。">
+        {MINI.map(([id, label, Comp]) => (
+          <DCArtboard key={id} id={id} label={label} width={446} height={918} style={{ background: '#e3dccb' }}>
+            <Phone><Comp /></Phone>
+          </DCArtboard>
+        ))}
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
